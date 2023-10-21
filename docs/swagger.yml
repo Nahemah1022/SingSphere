@@ -1,0 +1,235 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Entertainment App API"
+  description: "API for user management and entertainment rooms"
+basePath: "/api"
+schemes:
+  - "https"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+
+paths:
+  /users:
+    post:
+      tags:
+        - "User Account"
+      summary: "Create a new user"
+      parameters:
+        - in: "body"
+          name: "user"
+          required: true
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        201:
+          description: "User created successfully"
+
+    put:
+      tags:
+        - "User Account"
+      summary: "Update user information"
+      parameters:
+        - in: "body"
+          name: "user"
+          required: true
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        200:
+          description: "User updated successfully"
+
+  /users/login:
+    post:
+      tags:
+        - "User Account"
+      summary: "Login and get JWT token"
+      parameters:
+        - in: "body"
+          name: "credentials"
+          required: true
+          schema:
+            $ref: "#/definitions/UserLogin"
+      responses:
+        200:
+          description: "JWT token obtained successfully"
+          schema:
+            $ref: "#/definitions/JWTToken"
+
+  /rooms:
+    post:
+      tags:
+        - "Entertainment Room"
+      summary: "Create a new entertainment room"
+      parameters:
+        - in: "body"
+          name: "room"
+          required: true
+          schema:
+            $ref: "#/definitions/Room"
+      responses:
+        201:
+          description: "Room created successfully"
+
+    get:
+      tags:
+        - "Entertainment Room"
+      summary: "Get a list of available rooms"
+      responses:
+        200:
+          description: "List of rooms"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Room"
+
+  /rooms/{roomId}:
+    delete:
+      tags:
+        - "Entertainment Room"
+      summary: "Delete an entertainment room by ID"
+      parameters:
+        - in: "path"
+          name: "roomId"
+          required: true
+          type: "string"
+      responses:
+        204:
+          description: "Room deleted successfully"
+
+  /rooms/{roomId}/users:
+    post:
+      tags:
+        - "User Interactions in Entertainment Room"
+      summary: "Join a user to an entertainment room"
+      parameters:
+        - in: "path"
+          name: "roomId"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "user"
+          required: true
+          schema:
+            $ref: "#/definitions/User"
+      responses:
+        201:
+          description: "User joined the room successfully"
+
+    get:
+      tags:
+        - "User Interactions in Entertainment Room"
+      summary: "Get a list of users in the room"
+      parameters:
+        - in: "path"
+          name: "roomId"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: "List of users in the room"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+
+  /rooms/{roomId}/chat:
+    post:
+      tags:
+        - "User Interactions in Entertainment Room"
+      summary: "Send a real-time chat message in the room"
+      parameters:
+        - in: "path"
+          name: "roomId"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "message"
+          required: true
+          schema:
+            $ref: "#/definitions/ChatMessage"
+      responses:
+        201:
+          description: "Message sent successfully"
+
+  /rooms/{roomId}/voice:
+    post:
+      tags:
+        - "User Interactions in Entertainment Room"
+      summary: "Start a real-time voice chat in the room"
+      parameters:
+        - in: "path"
+          name: "roomId"
+          required: true
+          type: "string"
+      responses:
+        201:
+          description: "Voice chat started successfully"
+
+  /rooms/{roomId}/video:
+    post:
+      tags:
+        - "User Interactions in Entertainment Room"
+      summary: "Start streaming video in the room"
+      parameters:
+        - in: "path"
+          name: "roomId"
+          required: true
+          type: "string"
+      responses:
+        201:
+          description: "Video streaming started successfully"
+
+definitions:
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      username:
+        type: "string"
+      email:
+        type: "string"
+    required:
+      - username
+      - email
+
+  UserLogin:
+    type: "object"
+    properties:
+      username:
+        type: "string"
+      password:
+        type: "string"
+    required:
+      - username
+      - password
+
+  JWTToken:
+    type: "object"
+    properties:
+      token:
+        type: "string"
+
+  Room:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      name:
+        type: "string"
+    required:
+      - name
+
+  ChatMessage:
+    type: "object"
+    properties:
+      user:
+        type: "string"
+      message:
+        type: "string"
+    required:
+      - user
+      - message
