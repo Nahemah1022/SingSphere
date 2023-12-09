@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    image: nahemah1022/sing-shpere:v1.0
+    ports:
+      - "8000:8000"
+    environment:
+      - GO_ENV=production
+    volumes:
+      - .:/app
+      - go_mod:/go/pkg/mod
+      - go_build:/root/.cache/go-build
+
+volumes:
+  go_mod:
+  go_build:
