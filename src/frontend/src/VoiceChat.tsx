@@ -19,7 +19,8 @@ const Conference = () => {
 
     const [user, setUser] = useState<User>();
     const refTransport = useRef<WebSocketTransport>();
-    const WS_URL = `ws://127.0.0.1:8000/${window.location.pathname.replace("/", "")}`
+    const WS_URL = `ws://sinsphere-api.nahemah.com:8000/${window.location.pathname.replace("/", "")}`
+    // const WS_URL = `ws://127.0.0.1:8000/${window.location.pathname.replace("/", "")}`
     console.log(WS_URL)
     if (!refTransport.current) {
         refTransport.current = new WebSocketTransport(WS_URL);
@@ -27,7 +28,7 @@ const Conference = () => {
     const transport = refTransport.current;
     const refPeerConnection = useRef<RTCPeerConnection>(
         new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
         })
     );
     const peerConnection = refPeerConnection.current;
@@ -121,7 +122,10 @@ const Conference = () => {
                 throw new Error(`type ${event.type} not implemented`);
             }
         });
-    }, [store]);
+        return () => {
+            
+        }
+    }, [store, peerConnection, transport]);
 
     const renderUsers = () => {
         if (state.room.users.length === 0) {
