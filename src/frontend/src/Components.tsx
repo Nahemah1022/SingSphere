@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import css from "./VoiceChat.module.css";
 import { User } from "./api";
-import { useAudioContext, AudioContextProvider } from "./VoiceChat";
+import AudioContextProvider, { useAudioContext } from "./context/audio";
 
 export const Storybook: React.FC = () => {
   return (
@@ -143,7 +143,7 @@ export const EmptyRoom = () => {
           fontSize: 60,
         }}
       >
-        👀
+        <span role="img" aria-labelledby="eyes">👀</span>
       </div>
       <div style={{ textAlign: "center", fontSize: 16, color: "white" }}>
         Empty Room
