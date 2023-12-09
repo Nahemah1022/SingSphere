@@ -102,7 +102,7 @@ func (u *User) Wrap() *UserWrap {
 func (u *User) readPump() {
 	defer func() {
 		u.stop = true
-		u.pc.Close()
+		// u.pc.Close()
 		u.room.Leave(u)
 		u.conn.Close()
 	}()
