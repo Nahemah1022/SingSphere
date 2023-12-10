@@ -19,8 +19,7 @@ const Conference = () => {
 
     const [user, setUser] = useState<User>();
     const refTransport = useRef<WebSocketTransport>();
-    // const WS_URL = `ws://sinsphere-api.nahemah.com:8000/${window.location.pathname.replace("/", "")}`
-    const WS_URL = `wss://sinsphere-api.nahemah.com:8000/${window.location.pathname.replace("/", "")}`
+    const WS_URL = `wss://sinsphere-api.nahemah.com/${window.location.pathname.replace("/", "")}`
     // const WS_URL = `ws://127.0.0.1:8000/${window.location.pathname.replace("/", "")}`
     console.log(WS_URL)
     if (!refTransport.current) {
