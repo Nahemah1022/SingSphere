@@ -405,3 +405,30 @@ const IconSpeaker: React.FC<{
     </svg>
   );
 };
+
+interface ErrorBoundaryProps {}
+export class ErrorBoundary extends React.Component<
+    ErrorBoundaryProps,
+    {
+        errorMessage: string | undefined;
+    }
+> {
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.state = { errorMessage: undefined };
+    }
+    static getDerivedStateFromError(error: Error) {
+        // Update state so the next render will show the fallback UI.
+        console.log("getDerivedStateFromError", error);
+        return { errorMessage: error.toString() };
+    }
+    componentDidCatch(error: Error, info: any) {
+        console.log("error here", error, info);
+    }
+    render() {
+        if (this.state.errorMessage) {
+            return <div>err: {this.state.errorMessage}</div>;
+        }
+        return this.props.children;
+    }
+}

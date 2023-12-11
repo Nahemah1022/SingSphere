@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from "react";
 
 
 import css from "./VoiceChat.module.css";
-import { UserMe, UsersRemoteList, EmptyRoom } from "./Components";
+import { UserMe, UsersRemoteList, EmptyRoom, ErrorBoundary } from "./Components";
 import { useStore, User, StoreProvider } from "./api";
 import AudioContextProvider, { useAudioContext } from './context/audio';
 import MediaStreamManagerProvider, { useMediaStreamManager } from './context/mediastream';
@@ -261,30 +261,3 @@ export const VoiceChat = () => {
         </AudioContextProvider>
     );
 };
-
-interface ErrorBoundaryProps {}
-class ErrorBoundary extends React.Component<
-    ErrorBoundaryProps,
-    {
-        errorMessage: string | undefined;
-    }
-> {
-    constructor(props: ErrorBoundaryProps) {
-        super(props);
-        this.state = { errorMessage: undefined };
-    }
-    static getDerivedStateFromError(error: Error) {
-        // Update state so the next render will show the fallback UI.
-        console.log("getDerivedStateFromError", error);
-        return { errorMessage: error.toString() };
-    }
-    componentDidCatch(error: Error, info: any) {
-        console.log("error here", error, info);
-    }
-    render() {
-        if (this.state.errorMessage) {
-            return <div>err: {this.state.errorMessage}</div>;
-        }
-        return this.props.children;
-    }
-}
