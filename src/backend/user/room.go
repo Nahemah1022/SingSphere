@@ -1,4 +1,4 @@
-package main
+package user
 
 import (
 	"errors"
@@ -133,14 +133,14 @@ type Rooms struct {
 	rooms map[string]*Room
 }
 
-var errNotFound = errors.New("not found")
+var ErrNotFound = errors.New("not found")
 
 // Get room by room id
 func (r *Rooms) Get(roomID string) (*Room, error) {
 	if room, exists := r.rooms[roomID]; exists {
 		return room, nil
 	}
-	return nil, errNotFound
+	return nil, ErrNotFound
 }
 
 // GetOrCreate creates room if it does not exist

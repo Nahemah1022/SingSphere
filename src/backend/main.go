@@ -8,22 +8,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/Nahemah1022/singsphere-backend/user"
 	"github.com/gorilla/mux"
-	"github.com/pion/webrtc/v2"
 )
-
-// Prepare the configuration
-var peerConnectionConfig = webrtc.Configuration{
-	ICEServers: []webrtc.ICEServer{
-		{
-			URLs: []string{"stun:stun.l.google.com:19302"},
-		},
-	},
-}
 
 func main() {
 	fmt.Println("Hello")
-	rooms := NewRooms()
+	rooms := user.NewRooms()
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/stats", func(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +30,7 @@ func main() {
 		vars := mux.Vars(r)
 		roomID := vars["id"]
 		room, err := rooms.Get(roomID)
-		if err == errNotFound {
+		if err == user.ErrNotFound {
 			http.NotFound(w, r)
 			return
 		}
@@ -51,7 +42,7 @@ func main() {
 	}).Methods("GET")
 
 	router.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(rooms, w, r)
+		user.ServeWs(rooms, w, r)
 	})
 
 	// go rooms.Watch()

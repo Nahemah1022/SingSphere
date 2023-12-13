@@ -1,4 +1,4 @@
-package main
+package user
 
 import (
 	"bytes"
@@ -21,11 +21,20 @@ import (
 
 var (
 	// only support unified plan
-	cfg = webrtc.Configuration{
-		SDPSemantics: webrtc.SDPSemanticsUnifiedPlanWithFallback,
+	// cfg = webrtc.Configuration{
+	// 	SDPSemantics: webrtc.SDPSemanticsUnifiedPlanWithFallback,
+	// }
+
+	// prepare the configuration
+	peerConnectionConfig = webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{
+			{
+				URLs: []string{"stun:stun.l.google.com:19302"},
+			},
+		},
 	}
 
-	setting webrtc.SettingEngine
+	// setting webrtc.SettingEngine
 
 	errChanClosed    = errors.New("channel closed")
 	errInvalidTrack  = errors.New("track is nil")
@@ -168,73 +177,6 @@ func (u *User) writePump() {
 	}
 }
 
-// Event represents web socket user event
-type Event struct {
-	Type string `json:"type"`
-
-	Offer     *webrtc.SessionDescription `json:"offer,omitempty"`
-	Answer    *webrtc.SessionDescription `json:"answer,omitempty"`
-	Candidate *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
-	User      *UserWrap                  `json:"user,omitempty"`
-	Room      *RoomWrap                  `json:"room,omitempty"`
-	Desc      string                     `json:"desc,omitempty"`
-}
-
-// SendEvent sends json body to web socket
-func (u *User) SendEvent(event Event) error {
-	json, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-	u.send <- json
-	return nil
-}
-
-// SendEventUser sends user to client to identify himself
-func (u *User) SendEventUser() error {
-	return u.SendEvent(Event{Type: "user", User: u.Wrap()})
-}
-
-// SendEventRoom sends room to client with users except me
-func (u *User) SendEventRoom() error {
-	return u.SendEvent(Event{Type: "room", Room: u.room.Wrap(u)})
-}
-
-// BroadcastEvent sends json body to everyone in the room except this user
-func (u *User) BroadcastEvent(event Event) error {
-	json, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-	u.room.Broadcast(json, u)
-	return nil
-}
-
-// BroadcastEventJoin sends user_join event
-func (u *User) BroadcastEventJoin() error {
-	return u.BroadcastEvent(Event{Type: "user_join", User: u.Wrap()})
-}
-
-// BroadcastEventLeave sends user_leave event
-func (u *User) BroadcastEventLeave() error {
-	return u.BroadcastEvent(Event{Type: "user_leave", User: u.Wrap()})
-}
-
-// BroadcastEventMute sends microphone mute event to everyone
-func (u *User) BroadcastEventMute() error {
-	return u.BroadcastEvent(Event{Type: "mute", User: u.Wrap()})
-}
-
-// BroadcastEventUnmute sends microphone unmute event to everyone
-func (u *User) BroadcastEventUnmute() error {
-	return u.BroadcastEvent(Event{Type: "unmute", User: u.Wrap()})
-}
-
-// SendErr sends error in json format to web socket
-func (u *User) SendErr(err error) error {
-	return u.SendEvent(Event{Type: "error", Desc: fmt.Sprint(err)})
-}
-
 func (u *User) log(msg ...interface{}) {
 	log.Println(
 		fmt.Sprintf("user %s:", u.ID),
@@ -309,10 +251,7 @@ func (u *User) supportOpus(offer webrtc.SessionDescription) bool {
 			break
 		}
 	}
-	if payloadType == 0 {
-		return false
-	}
-	return true
+	return payloadType != 0
 }
 
 // HandleOffer handles webrtc offer
@@ -361,6 +300,9 @@ func (u *User) Offer() (webrtc.SessionDescription, error) {
 // SendOffer creates webrtc offer
 func (u *User) SendOffer() error {
 	offer, err := u.Offer()
+	if err != nil {
+		panic(err)
+	}
 	err = u.SendEvent(Event{Type: "offer", Offer: &offer})
 	if err != nil {
 		panic(err)
@@ -401,6 +343,9 @@ func (u *User) SendAnswer() error {
 		return err
 	}
 	err = u.SendEvent(Event{Type: "answer", Answer: &answer})
+	if err != nil {
+		panic(err)
+	}
 	return nil
 }
 
@@ -515,7 +460,7 @@ func (u *User) Watch() {
 }
 
 // serveWs handles websocket requests from the peer.
-func serveWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
+func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
