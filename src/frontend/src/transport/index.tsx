@@ -42,6 +42,9 @@ export default class WebSocketTransport implements Transport {
     public sendOffer(sessionDescription: RTCSessionDescriptionInit): void {
         this.sendEvent({ type: "offer", offer: sessionDescription });
     }
+    public sendOfferStereo(sessionDescription: RTCSessionDescriptionInit): void {
+        this.sendEvent({ type: "offer_stereo", offer: sessionDescription });
+    }
     public sendAnswer(sessionDescription: RTCSessionDescriptionInit): void {
         this.sendEvent({ type: "answer", answer: sessionDescription });
     }

@@ -1,11 +1,9 @@
 package user
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -79,6 +77,7 @@ type User struct {
 	inTracksLock  sync.RWMutex
 	outTracks     map[uint32]*webrtc.Track // Rest of the room's tracks
 	outTracksLock sync.RWMutex
+	stereoTreck   *webrtc.Track
 
 	rtpCh chan *rtp.Packet
 
@@ -107,76 +106,6 @@ func (u *User) Wrap() *UserWrap {
 	}
 }
 
-// readPump pumps messages from the websocket connection to the hub.
-func (u *User) readPump() {
-	defer func() {
-		u.stop = true
-		// u.pc.Close()
-		u.room.Leave(u)
-		u.conn.Close()
-	}()
-	u.conn.SetReadLimit(maxMessageSize)
-	u.conn.SetReadDeadline(time.Now().Add(pongWait))
-	u.conn.SetPongHandler(func(string) error { u.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	for {
-		_, message, err := u.conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-				log.Println(err)
-			}
-			break
-		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		go func() {
-			err := u.HandleEvent(message)
-			if err != nil {
-				log.Println(err)
-				u.SendErr(err)
-			}
-		}()
-	}
-}
-
-// writePump pumps messages from the hub to the websocket connection.
-//
-// A goroutine running writePump is started for each connection. The
-// application ensures that there is at most one writer to a connection by
-// executing all writes from this goroutine.
-func (u *User) writePump() {
-	ticker := time.NewTicker(pingPeriod)
-	defer func() {
-		ticker.Stop()
-		u.stop = true
-		u.conn.Close()
-	}()
-	for {
-		select {
-		case message, ok := <-u.send:
-			u.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if !ok {
-				// The hub closed the channel.
-				u.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-			w, err := u.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
-			w.Write(message)
-			if err := w.Close(); err != nil {
-				return
-			}
-		case <-ticker.C:
-			u.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := u.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
-		}
-	}
-}
-
 func (u *User) log(msg ...interface{}) {
 	log.Println(
 		fmt.Sprintf("user %s:", u.ID),
@@ -191,7 +120,7 @@ func (u *User) HandleEvent(eventRaw []byte) error {
 	if err != nil {
 		return err
 	}
-	u.log("handle event", event.Type)
+	u.log("handle event: ", event.Type)
 	if event.Type == "offer" {
 		if event.Offer == nil {
 			return u.SendErr(errors.New("empty offer"))
@@ -228,17 +157,6 @@ func (u *User) HandleEvent(eventRaw []byte) error {
 	return u.SendErr(errNotImplemented)
 }
 
-// GetRoomTracks returns list of room incoming tracks
-func (u *User) GetRoomTracks() []*webrtc.Track {
-	tracks := []*webrtc.Track{}
-	for _, user := range u.room.GetUsers() {
-		for _, track := range user.inTracks {
-			tracks = append(tracks, track)
-		}
-	}
-	return tracks
-}
-
 func (u *User) supportOpus(offer webrtc.SessionDescription) bool {
 	mediaEngine := webrtc.MediaEngine{}
 	mediaEngine.PopulateFromSDP(offer)
@@ -270,7 +188,6 @@ func (u *User) HandleOffer(offer webrtc.SessionDescription) error {
 		}
 	}
 
-	time.Sleep(3000 * time.Millisecond)
 	// Set the remote SessionDescription
 	if err := u.pc.SetRemoteDescription(offer); err != nil {
 		return err
@@ -349,104 +266,6 @@ func (u *User) SendAnswer() error {
 	return nil
 }
 
-// receiveInTrackRTP receive all incoming tracks' rtp and sent to one channel
-func (u *User) receiveInTrackRTP(remoteTrack *webrtc.Track) {
-	for {
-		if u.stop {
-			return
-		}
-		rtp, err := remoteTrack.ReadRTP()
-		if err != nil {
-			if err == io.EOF {
-				return
-			}
-			log.Fatalf("rtp err => %v", err)
-		}
-		u.rtpCh <- rtp
-	}
-}
-
-// ReadRTP read rtp packet
-func (u *User) ReadRTP() (*rtp.Packet, error) {
-	rtp, ok := <-u.rtpCh
-	if !ok {
-		return nil, errChanClosed
-	}
-	return rtp, nil
-}
-
-// WriteRTP send rtp packet to user outgoing tracks
-func (u *User) WriteRTP(pkt *rtp.Packet) error {
-	if pkt == nil {
-		return errInvalidPacket
-	}
-	u.outTracksLock.RLock()
-	track := u.outTracks[pkt.SSRC]
-	u.outTracksLock.RUnlock()
-
-	if track == nil {
-		log.Printf("WebRTCTransport.WriteRTP track==nil pkt.SSRC=%d", pkt.SSRC)
-		return errInvalidTrack
-	}
-
-	// log.Debugf("WebRTCTransport.WriteRTP pkt=%v", pkt)
-	err := track.WriteRTP(pkt)
-	if err != nil {
-		// log.Errorf(err.Error())
-		// u.writeErrCnt++
-		return err
-	}
-	return nil
-}
-
-func (u *User) broadcastIncomingRTP() {
-	for {
-		rtp, err := u.ReadRTP()
-		if err != nil {
-			panic(err)
-		}
-		for _, user := range u.room.GetOtherUsers(u) {
-			err := user.WriteRTP(rtp)
-			if err != nil {
-				// panic(err)
-				fmt.Println(err)
-			}
-		}
-	}
-}
-
-// GetInTracks return incoming tracks
-func (u *User) GetInTracks() map[uint32]*webrtc.Track {
-	u.inTracksLock.RLock()
-	defer u.inTracksLock.RUnlock()
-	return u.inTracks
-
-}
-
-// GetOutTracks return outgoing tracks
-func (u *User) GetOutTracks() map[uint32]*webrtc.Track {
-	u.outTracksLock.RLock()
-	defer u.outTracksLock.RUnlock()
-	return u.outTracks
-}
-
-// AddTrack adds track to peer connection
-func (u *User) AddTrack(ssrc uint32) error {
-	track, err := u.pc.NewTrack(webrtc.DefaultPayloadTypeOpus, ssrc, string(ssrc), string(ssrc))
-	if err != nil {
-		return err
-	}
-	if _, err := u.pc.AddTrack(track); err != nil {
-		log.Println("ERROR Add remote track as peerConnection local track", err)
-		return err
-	}
-
-	u.outTracksLock.Lock()
-	u.outTracks[track.SSRC()] = track
-	u.outTracksLock.Unlock()
-	return nil
-}
-
 // Watch for debug
 func (u *User) Watch() {
 	ticker := time.NewTicker(time.Second * 5)
@@ -456,6 +275,7 @@ func (u *User) Watch() {
 			return
 		}
 		fmt.Println("ID:", u.ID, "out: ", u.GetOutTracks())
+		fmt.Println("ID:", u.ID, "in: ", u.GetInTracks())
 	}
 }
 
@@ -516,12 +336,17 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 			fmt.Println("attach ", len(tracks), "tracks to new user")
 			user.log("new user add tracks", len(tracks))
 			for _, track := range tracks {
-				err := user.AddTrack(track.SSRC())
-				if err != nil {
+				if err := user.AddTrack(track.SSRC()); err != nil {
 					log.Println("ERROR Add remote track as peerConnection local track", err)
 					panic(err)
 				}
 			}
+
+			if err := user.AddStereoTrack(); err != nil {
+				log.Println("ERROR Add stereo track as peerConnection local track", err)
+				panic(err)
+			}
+
 			err = user.SendOffer()
 			if err != nil {
 				panic(err)
