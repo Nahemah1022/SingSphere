@@ -2,6 +2,15 @@ package user
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"math/rand"
+	"os"
+	"time"
+
+	"github.com/Nahemah1022/singsphere-backend/stereo"
+	"github.com/pion/webrtc/v2"
+	"github.com/pion/webrtc/v2/pkg/media"
 )
 
 type broadcastMsg struct {
@@ -12,11 +21,13 @@ type broadcastMsg struct {
 // Room maintains the set of active clients and broadcasts messages to the
 // clients.
 type Room struct {
-	Name      string
-	users     map[string]*User
-	broadcast chan broadcastMsg
-	join      chan *User // Register requests from the clients.
-	leave     chan *User // Unregister requests from clients.
+	Name          string
+	users         map[string]*User
+	broadcast     chan broadcastMsg
+	join          chan *User // Register requests from the clients.
+	leave         chan *User // Unregister requests from clients.
+	stereoTrack   *webrtc.Track
+	stereoPlaying bool
 }
 
 // RoomWrap is a public representation of a room
@@ -48,12 +59,74 @@ func (r *Room) Wrap(me *User) *RoomWrap {
 
 // NewRoom creates new room
 func NewRoom(name string) *Room {
+	// mediaEngine := webrtc.MediaEngine{}
+	// mediaEngine.RegisterCodec(webrtc.NewRTPOpusCodec(webrtc.DefaultPayloadTypeOpus, 48000))
+	// iceConnectedCtx, iceConnectedCtxCancel := context.WithCancel(context.Background())
+	audioTrack, addTrackErr := webrtc.NewTrack(
+		webrtc.DefaultPayloadTypeOpus,
+		rand.Uint32(),
+		"audio",
+		"pion",
+		webrtc.NewRTPOpusCodec(webrtc.DefaultPayloadTypeOpus, 48000),
+	)
+	if addTrackErr != nil {
+		panic(addTrackErr)
+	}
+
 	return &Room{
-		broadcast: make(chan broadcastMsg),
-		join:      make(chan *User),
-		leave:     make(chan *User),
-		users:     make(map[string]*User),
-		Name:      name,
+		broadcast:     make(chan broadcastMsg),
+		join:          make(chan *User),
+		leave:         make(chan *User),
+		users:         make(map[string]*User),
+		Name:          name,
+		stereoTrack:   audioTrack,
+		stereoPlaying: false,
+	}
+}
+
+func (r *Room) StereoPlay() {
+	if r.stereoPlaying {
+		return
+	}
+	r.stereoPlaying = true
+	// Open a IVF file and start reading using our IVFReader
+	file, oggErr := os.Open("./media/output.ogg")
+	if oggErr != nil {
+		panic(oggErr)
+	}
+
+	// Open on oggfile in non-checksum mode.
+	ogg, _, oggErr := stereo.NewWith(file)
+	if oggErr != nil {
+		panic(oggErr)
+	}
+
+	// Wait for connection established
+	// <-iceConnectedCtx.Done()
+
+	// Keep track of last granule, the difference is the amount of samples in the buffer
+	var lastGranule uint64
+	for {
+		pageData, pageHeader, oggErr := ogg.ParseNextPage()
+		if oggErr == io.EOF {
+			fmt.Printf("All audio pages parsed and sent")
+			os.Exit(0)
+		}
+
+		if oggErr != nil {
+			panic(oggErr)
+		}
+
+		// The amount of samples is the difference between the last and current timestamp
+		sampleCount := float64((pageHeader.GranulePosition - lastGranule))
+		lastGranule = pageHeader.GranulePosition
+
+		if oggErr = r.stereoTrack.WriteSample(media.Sample{Data: pageData, Samples: uint32(sampleCount)}); oggErr != nil {
+			panic(oggErr)
+		}
+
+		// Convert seconds to Milliseconds, Sleep doesn't accept floats
+		time.Sleep(time.Duration((sampleCount/48000)*1000) * time.Millisecond)
 	}
 }
 

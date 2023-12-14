@@ -342,7 +342,8 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			if err := user.AddStereoTrack(); err != nil {
+			if _, err := user.pc.AddTrack(user.room.stereoTrack); err != nil {
+				// if err := user.AddStereoTrack(); err != nil {
 				log.Println("ERROR Add stereo track as peerConnection local track", err)
 				panic(err)
 			}
@@ -351,6 +352,7 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				panic(err)
 			}
+			go user.room.StereoPlay()
 		} else if connectionState == webrtc.ICEConnectionStateDisconnected ||
 			connectionState == webrtc.ICEConnectionStateFailed ||
 			connectionState == webrtc.ICEConnectionStateClosed {
