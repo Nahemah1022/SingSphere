@@ -2,6 +2,7 @@ package stereo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,12 +21,18 @@ var (
 
 func Trans(filename string, playlist chan<- string) {
 	if input_dir == "" || output_dir == "" {
-		input_dir = "./media"
-		output_dir = "./media/decoded"
+		input_dir = "/var/s3-mount"
+		output_dir = "./media"
 		// panic("env var not found: TRANSCODE_INPUT_PATH or TRANSCODE_OUTPUT_PATH")
 	}
 	outpath := fmt.Sprintf("%s/%s.ogg", output_dir, filename)
-	ffmpeg.Input(fmt.Sprintf("%s/%s", input_dir, filename)).
+	inpath := fmt.Sprintf("%s/%s", input_dir, filename)
+	if _, err := os.Stat(inpath); errors.Is(err, os.ErrNotExist) {
+		log.Printf("requested file '%s' not found\n", filename)
+		return
+	}
+
+	ffmpeg.Input(inpath).
 		Output(outpath, ffmpeg.KwArgs{"c:a": "libopus", "page_duration": 20000, "loglevel": "quiet"}).
 		OverWriteOutput().ErrorToStdOut().Run()
 	log.Printf("convert to opus completed, output filepath: %s\n", outpath)
