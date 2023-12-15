@@ -11,6 +11,8 @@ services:
       - PORT=8000
       - TRANSCODE_INPUT_PATH=./s3
       - TRANSCODE_OUTPUT_PATH=./media
+      - MQ_USER=singsphere
+      - MQ_PASSWORD=singsphere123
     network_mode: "host"
     volumes:
       - go_mod:/go/pkg/mod

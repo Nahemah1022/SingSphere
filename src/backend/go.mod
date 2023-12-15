@@ -30,6 +30,7 @@ require (
 	github.com/pion/transport v0.8.10 // indirect
 	github.com/pion/turn/v2 v2.0.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/rabbitmq/amqp091-go v1.9.0 // indirect
 	github.com/u2takey/go-utils v0.3.1 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect

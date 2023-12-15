@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 
+	"github.com/Nahemah1022/singsphere-backend/playlist"
 	"github.com/Nahemah1022/singsphere-backend/stereo"
 	"github.com/pion/webrtc/v2"
 )
@@ -26,7 +27,8 @@ type Room struct {
 	stereoTrack   *webrtc.Track
 	stereoPlaying bool
 	requests      chan string
-	playlist      chan string
+	waitlist      chan string
+	playlist      *playlist.Playlist
 }
 
 // RoomWrap is a public representation of a room
@@ -61,6 +63,12 @@ func NewRoom(name string) *Room {
 	// mediaEngine := webrtc.MediaEngine{}
 	// mediaEngine.RegisterCodec(webrtc.NewRTPOpusCodec(webrtc.DefaultPayloadTypeOpus, 48000))
 	// iceConnectedCtx, iceConnectedCtxCancel := context.WithCancel(context.Background())
+
+	requests := make(chan string)
+
+	pl := playlist.New()
+	pl.Subscribe(name, requests)
+
 	audioTrack, addTrackErr := webrtc.NewTrack(
 		webrtc.DefaultPayloadTypeOpus,
 		rand.Uint32(),
@@ -80,8 +88,9 @@ func NewRoom(name string) *Room {
 		Name:          name,
 		stereoTrack:   audioTrack,
 		stereoPlaying: false,
-		requests:      make(chan string),
-		playlist:      make(chan string),
+		requests:      requests,
+		waitlist:      make(chan string),
+		playlist:      pl,
 	}
 }
 
@@ -93,7 +102,7 @@ func (r *Room) StereoPlay() {
 	r.stereoPlaying = true
 
 	log.Println("Stereo Start Playing")
-	for song := range r.playlist {
+	for song := range r.waitlist {
 		log.Printf("Playing Song: %s\n", song)
 		ctx, ctxCancel := context.WithCancel(context.Background())
 		stereo.Play(song, r.stereoTrack, ctxCancel)
@@ -169,7 +178,7 @@ func (r *Room) run() {
 				}
 			}
 		case encoded := <-r.requests:
-			go stereo.Trans(encoded, r.playlist)
+			go stereo.Trans(encoded, r.waitlist)
 		}
 	}
 }
