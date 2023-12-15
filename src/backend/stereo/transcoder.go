@@ -33,7 +33,7 @@ func Trans(filename string, playlist chan<- string) {
 	}
 
 	ffmpeg.Input(inpath).
-		Output(outpath, ffmpeg.KwArgs{"c:a": "libopus", "page_duration": 20000}).
+	Output(outpath, ffmpeg.KwArgs{"c:a": "libopus", "page_duration": 20000, "loglevel": "debug"}).
 		OverWriteOutput().ErrorToStdOut().Run()
 	log.Printf("convert to opus completed, output filepath: %s\n", outpath)
 	playlist <- outpath
