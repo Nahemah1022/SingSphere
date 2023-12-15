@@ -353,8 +353,7 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 				panic(err)
 			}
 			go user.room.StereoPlay()
-			user.room.requests <- "1.mp3"
-			user.room.requests <- "2.mp3"
+			user.room.requests <- "peach.mp3"
 		} else if connectionState == webrtc.ICEConnectionStateDisconnected ||
 			connectionState == webrtc.ICEConnectionStateFailed ||
 			connectionState == webrtc.ICEConnectionStateClosed {

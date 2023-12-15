@@ -4,19 +4,18 @@ services:
   app:
     restart: always
     build: .
-    image: nahemah1022/sing-shpere:v1.0
+    image: nahemah1022/sing-shpere:testv1.0
+    user: $DOCKER_USER
     environment:
       - GO_ENV=production
-      - PORT=80
+      - PORT=8000
+      - TRANSCODE_INPUT_PATH=./s3
+      - TRANSCODE_OUTPUT_PATH=./media
     network_mode: "host"
-    logging:
-      driver: awslogs
-      options:
-        awslogs-region: us-east-1
-        awslogs-group: voice-server
     volumes:
       - go_mod:/go/pkg/mod
       - go_build:/root/.cache/go-build
+      - /var/s3:/app/s3
 
 volumes:
   go_mod:
