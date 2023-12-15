@@ -1,16 +1,13 @@
 package user
 
 import (
+	"context"
 	"errors"
-	"fmt"
-	"io"
+	"log"
 	"math/rand"
-	"os"
-	"time"
 
 	"github.com/Nahemah1022/singsphere-backend/stereo"
 	"github.com/pion/webrtc/v2"
-	"github.com/pion/webrtc/v2/pkg/media"
 )
 
 type broadcastMsg struct {
@@ -28,6 +25,8 @@ type Room struct {
 	leave         chan *User // Unregister requests from clients.
 	stereoTrack   *webrtc.Track
 	stereoPlaying bool
+	requests      chan string
+	playlist      chan string
 }
 
 // RoomWrap is a public representation of a room
@@ -81,52 +80,24 @@ func NewRoom(name string) *Room {
 		Name:          name,
 		stereoTrack:   audioTrack,
 		stereoPlaying: false,
+		requests:      make(chan string),
+		playlist:      make(chan string),
 	}
 }
 
 func (r *Room) StereoPlay() {
+	// ensure this goroutine would be invoked only once
 	if r.stereoPlaying {
 		return
 	}
 	r.stereoPlaying = true
-	// Open a IVF file and start reading using our IVFReader
-	file, oggErr := os.Open("./media/output.ogg")
-	if oggErr != nil {
-		panic(oggErr)
-	}
 
-	// Open on oggfile in non-checksum mode.
-	ogg, _, oggErr := stereo.NewWith(file)
-	if oggErr != nil {
-		panic(oggErr)
-	}
-
-	// Wait for connection established
-	// <-iceConnectedCtx.Done()
-
-	// Keep track of last granule, the difference is the amount of samples in the buffer
-	var lastGranule uint64
-	for {
-		pageData, pageHeader, oggErr := ogg.ParseNextPage()
-		if oggErr == io.EOF {
-			fmt.Printf("All audio pages parsed and sent")
-			os.Exit(0)
-		}
-
-		if oggErr != nil {
-			panic(oggErr)
-		}
-
-		// The amount of samples is the difference between the last and current timestamp
-		sampleCount := float64((pageHeader.GranulePosition - lastGranule))
-		lastGranule = pageHeader.GranulePosition
-
-		if oggErr = r.stereoTrack.WriteSample(media.Sample{Data: pageData, Samples: uint32(sampleCount)}); oggErr != nil {
-			panic(oggErr)
-		}
-
-		// Convert seconds to Milliseconds, Sleep doesn't accept floats
-		time.Sleep(time.Duration((sampleCount/48000)*1000) * time.Millisecond)
+	log.Println("Stereo Start Playing")
+	for song := range r.playlist {
+		log.Printf("Playing Song: %s\n", song)
+		ctx, ctxCancel := context.WithCancel(context.Background())
+		stereo.Play(song, r.stereoTrack, ctxCancel)
+		<-ctx.Done()
 	}
 }
 
@@ -197,6 +168,8 @@ func (r *Room) run() {
 					delete(r.users, user.ID)
 				}
 			}
+		case encoded := <-r.requests:
+			go stereo.Trans(encoded, r.playlist)
 		}
 	}
 }

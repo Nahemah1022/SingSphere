@@ -24,6 +24,7 @@ func main() {
 		}
 		w.Write(bytes)
 	}).Methods("GET")
+
 	router.HandleFunc("/api/rooms/{id}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Headers", "*")
 		w.Header().Add("Access-Control-Allow-Origin", "*")

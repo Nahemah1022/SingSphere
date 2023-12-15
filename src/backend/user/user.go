@@ -353,6 +353,8 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 				panic(err)
 			}
 			go user.room.StereoPlay()
+			user.room.requests <- "1.mp3"
+			user.room.requests <- "2.mp3"
 		} else if connectionState == webrtc.ICEConnectionStateDisconnected ||
 			connectionState == webrtc.ICEConnectionStateFailed ||
 			connectionState == webrtc.ICEConnectionStateClosed {
@@ -411,7 +413,7 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 	// new goroutines.
 	go user.writePump()
 	go user.readPump()
-	go user.Watch()
+	// go user.Watch()
 
 	user.SendEventUser()
 	user.SendEventRoom()

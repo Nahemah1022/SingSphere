@@ -71,7 +71,7 @@ func (u *User) AddStereoTrack() error {
 
 	go func() {
 		// Open a IVF file and start reading using our IVFReader
-		file, oggErr := os.Open("./media/output.ogg")
+		file, oggErr := os.Open("./media/decoded/sample.mp3.ogg")
 		if oggErr != nil {
 			panic(oggErr)
 		}
