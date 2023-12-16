@@ -19,16 +19,16 @@ type broadcastMsg struct {
 // Room maintains the set of active clients and broadcasts messages to the
 // clients.
 type Room struct {
-	Name          string
-	users         map[string]*User
-	broadcast     chan broadcastMsg
-	join          chan *User // Register requests from the clients.
-	leave         chan *User // Unregister requests from clients.
-	stereoTrack   *webrtc.Track
-	stereoPlaying bool
-	requests      chan string
-	waitlist      chan string
-	playlist      *playlist.Playlist
+	Name            string
+	users           map[string]*User
+	broadcast       chan broadcastMsg
+	join            chan *User // Register requests from the clients.
+	leave           chan *User // Unregister requests from clients.
+	stereoTrack     *webrtc.Track
+	stereoPlaying   bool
+	requests        chan string // Songs requested from users
+	transcodedSongs chan string // Songs transcoded into OPUS after user requests
+	playlist        *playlist.Playlist
 }
 
 // RoomWrap is a public representation of a room
@@ -81,28 +81,28 @@ func NewRoom(name string) *Room {
 	}
 
 	return &Room{
-		broadcast:     make(chan broadcastMsg),
-		join:          make(chan *User),
-		leave:         make(chan *User),
-		users:         make(map[string]*User),
-		Name:          name,
-		stereoTrack:   audioTrack,
-		stereoPlaying: false,
-		requests:      requests,
-		waitlist:      make(chan string),
-		playlist:      pl,
+		broadcast:       make(chan broadcastMsg),
+		join:            make(chan *User),
+		leave:           make(chan *User),
+		users:           make(map[string]*User),
+		Name:            name,
+		stereoTrack:     audioTrack,
+		stereoPlaying:   false,
+		requests:        requests,
+		transcodedSongs: make(chan string),
+		playlist:        pl,
 	}
 }
 
 func (r *Room) StereoPlay() {
-	// ensure this goroutine would be invoked only once
+	// ensure this goroutine invoked only once when the first user comes in
 	if r.stereoPlaying {
 		return
 	}
 	r.stereoPlaying = true
 
 	log.Println("Stereo Start Playing")
-	for song := range r.waitlist {
+	for song := range r.transcodedSongs {
 		log.Printf("Playing Song: %s\n", song)
 		ctx, ctxCancel := context.WithCancel(context.Background())
 		stereo.Play(song, r.stereoTrack, ctxCancel)
@@ -178,7 +178,7 @@ func (r *Room) run() {
 				}
 			}
 		case encoded := <-r.requests:
-			go stereo.Trans(encoded, r.waitlist)
+			go stereo.Trans(encoded, r.transcodedSongs)
 		}
 	}
 }
