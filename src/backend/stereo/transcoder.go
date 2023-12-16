@@ -32,9 +32,17 @@ func Trans(filename string, playlist chan<- string) {
 		return
 	}
 
-	ffmpeg.Input(inpath).
-	Output(outpath, ffmpeg.KwArgs{"c:a": "libopus", "page_duration": 20000, "loglevel": "debug"}).
+	err := ffmpeg.Input(inpath).
+		Output(outpath, ffmpeg.KwArgs{"c:a": "libopus", "page_duration": 20000, "loglevel": "debug"}).
 		OverWriteOutput().ErrorToStdOut().Run()
+	if err != nil {
+		panic(err)
+	}
+	if _, err := os.Stat(outpath); errors.Is(err, os.ErrNotExist) {
+		log.Printf("converted file '%s' not found\n", outpath)
+		return
+	}
+
 	log.Printf("convert to opus completed, output filepath: %s\n", outpath)
 	playlist <- outpath
 }
