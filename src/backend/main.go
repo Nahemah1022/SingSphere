@@ -18,6 +18,8 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/stats", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Headers", "*")
+		w.Header().Add("Access-Control-Allow-Origin", "*")
 		bytes, err := json.Marshal(rooms.GetStats())
 		if err != nil {
 			http.Error(w, fmt.Sprint(err), 500)
