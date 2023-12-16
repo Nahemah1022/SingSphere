@@ -14,6 +14,8 @@ RUN go mod download
 COPY . .
 
 RUN mkdir -p ./media
+RUN apt update
+RUN apt install -y ffmpeg
 
 # Build the Go app
 RUN go build -o main .
