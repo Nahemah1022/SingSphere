@@ -1,7 +1,7 @@
 // pure components and storybook-like sandbox
 import React, { useState } from "react";
 import css from "./VoiceChat.module.css";
-import { User } from "./api";
+import { User } from "../api/api";
 import AudioContextProvider, { useAudioContext } from "./context/audio";
 
 export const Storybook: React.FC = () => {

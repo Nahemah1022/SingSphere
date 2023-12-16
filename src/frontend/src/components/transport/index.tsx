@@ -1,4 +1,4 @@
-import { TransportEvent } from '../api'
+import { TransportEvent } from '../../api/api'
 
 interface Transport {
     sendOffer: (sessionDescription: RTCSessionDescriptionInit) => void;

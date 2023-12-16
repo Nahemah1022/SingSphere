@@ -28,11 +28,11 @@ function Rooms() {
     const newKTVroomId = uuidv4();
     navigate(`/${newKTVroomId}`);
 
-    // Fetch ktvrooms after creating a new room
+    // Fetch ktv rooms after creating a new room
     await fetchKTVrooms();
   };
 
-  // Fetch ktvrooms when mounting
+  // Fetch ktv rooms when mounting
   useEffect(() => {
     fetchKTVrooms();
   }, []);

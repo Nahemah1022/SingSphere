@@ -1,2 +1,3 @@
 node_modules
 build
+src/aws_creds_local.tsx
