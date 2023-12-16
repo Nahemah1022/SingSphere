@@ -406,7 +406,9 @@ const IconSpeaker: React.FC<{
   );
 };
 
-interface ErrorBoundaryProps {}
+interface ErrorBoundaryProps {
+	children: React.ReactNode;
+}
 export class ErrorBoundary extends React.Component<
     ErrorBoundaryProps,
     {

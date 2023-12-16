@@ -2,7 +2,7 @@ import React, { useRef, useContext } from "react";
 import { useAudioContext } from "./audio";
 
 const MediaStreamManagerContext = React.createContext<MediaStreamManager | undefined>(undefined);
-const MediaStreamManagerProvider: React.FC = ({ children }) => {
+const MediaStreamManagerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const audioContext = useAudioContext();
     const refMediaStreamManager = useRef<MediaStreamManager>();
     if (!refMediaStreamManager.current) {

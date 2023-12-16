@@ -7,7 +7,7 @@ const createAudioContext = (): AudioContext => {
 };
 const AudioContextContext = React.createContext<AudioContext | undefined>(undefined);
 
-const AudioContextProvider: React.FC = ({ children }) => {
+const AudioContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const refAudioContext = useRef<AudioContext>();
     if (!refAudioContext.current) {
         refAudioContext.current = createAudioContext();

@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useRef, useState, useEffect } from "react";
-
-
+import { useParams } from 'react-router-dom';
 import css from "./VoiceChat.module.css";
 import { UserMe, UsersRemoteList, EmptyRoom, ErrorBoundary } from "./Components";
 import { useStore, User, StoreProvider } from "./api";
@@ -9,7 +8,11 @@ import AudioContextProvider, { useAudioContext } from './context/audio';
 import MediaStreamManagerProvider, { useMediaStreamManager } from './context/mediastream';
 import WebSocketTransport from './transport';
 
-const Conference = () => {
+interface ConferenceProps {
+  roomId: string;
+}
+
+const Conference = ({ roomId }: ConferenceProps) => {
     const audioContext = useAudioContext();
     const mediaStreamManager = useMediaStreamManager();
 
@@ -19,8 +22,9 @@ const Conference = () => {
 
     const [user, setUser] = useState<User>();
     const refTransport = useRef<WebSocketTransport>();
-    const WS_URL = `wss://sinsphere-api.nahemah.com/${window.location.pathname.replace("/", "")}`
-    // const WS_URL = `ws://127.0.0.1:8000/${window.location.pathname.replace("/", "")}`
+	const WS_URL = `wss://sinsphere-api.nahemah.com/${roomId}`;
+    //const WS_URL = `wss://sinsphere-api.nahemah.com/${window.location.pathname.replace("/", "")}`
+    //const WS_URL = `ws://127.0.0.1:8000/${window.location.pathname.replace("/", "")}`
     console.log(WS_URL)
     if (!refTransport.current) {
         refTransport.current = new WebSocketTransport(WS_URL);
@@ -123,7 +127,7 @@ const Conference = () => {
             }
         });
         return () => {
-            
+
         }
     }, [store, peerConnection, transport]);
 
@@ -234,6 +238,8 @@ const Conference = () => {
 };
 
 export const VoiceChat = () => {
+	const { id } = useParams<{id: string | undefined}>();
+	const roomId = id || "";
     const refContainer = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const set100vh = () => {
@@ -253,7 +259,7 @@ export const VoiceChat = () => {
             <StoreProvider>
             <div className={css.container} ref={refContainer}>
                 <ErrorBoundary>
-                    <Conference />
+                   {roomId && <Conference roomId={roomId}/>}
                 </ErrorBoundary>
             </div>
             </StoreProvider>
