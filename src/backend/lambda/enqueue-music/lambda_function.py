@@ -14,6 +14,7 @@ PORT = 5671
 EXCHANGE_NAME = 'songs_exchange'
 EXCHANGE_TYPE = 'direct'
 BUCKET = 'final-music'
+ROOM_STATS_API = 'https://sinsphere-api.nahemah.com/api/stats'
 
 # Set up logging
 logger = logging.getLogger()
@@ -28,36 +29,74 @@ def lambda_handler(event, context):
     song = decrypted_body['song']
     room = decrypted_body['room']
 
-    all_songs_names = list_all_songs() 
+    song_names = list_song() 
+    room_names = list_room()
+
+    if not room_names:
+        logger.error("No rooms are currently available")
+        return build_response(404, {"message": "No rooms available, please create a room first."})
+    
     if not room:
         logger.error("Empty room received")
         return build_response(400, {"message": "Room cannot be empty, please try again."})
+    
+    if room not in room_names:
+        logger.error("Room: %s is not available", room)
+        return build_response(404, {"message": f"No room found matching the name '{room}', please try again."})
+    
+    if not song_names:
+        logger.error("No available songs")
+        return build_response(400, {"message": "No songs available, please index a song first."})
+    
     if not song:
         logger.error("Empty song received")
-        return build_response(400, {"message": "Invalid song, please try again."})
-    if song not in all_songs_names:
-        logger.info("Song: %s is not available", song)
-        return build_response(404, {"message": f"No song found matching the name '{song}'. Please try a different search."})
+        return build_response(400, {"message": "Song cannot be empty, please try again."})
+    
+    if song not in song_names:
+        logger.error("Song: %s is not available", song)
+        return build_response(404, {"message": f"No song found matching the name '{song}'. Please try again."})
 
     connection = connect()
+    
     try:
         message = send_message(connection, room, song)
         logger.info(message)
-        return build_response(200, {"message": "Send message successfully", "result": message})
+        return build_response(200, {"message": "Message sent successfully", "result": message})
     except Exception as e:
         logger.error("Error in sending message: %s", e)
         return build_response(500, {"message": "Failed to send message due to server error. Please contact development team."})
 
 
+# list name of all rooms
+def list_room():
+    logger.info('Enter list_room')
+    response = requests.get(ROOM_STATS_API)
+    
+    if response.status_code == 200:
+        data = response.json()
+        room_names = [room['name'] for room in data.get('rooms', [])]
+        if room_names:
+            logger.info('Rooms: %s', room_names)
+            return room_names
+        logger.error('Room data is present but the room list is empty, data: %s', data)
+        return []
+    
+    logger.error('Failed to retrieve room stats, status code: %s, data: %s', response.status_code, data)
+    return []
+
 # list name of all songs from s3 without OpenSearch info
-def list_all_songs():
-    logger.info('Enter list_all_songs')
+def list_song():
+    logger.info('Enter list_song')
 
     s3_client = boto3.client("s3")
     objects = s3_client.list_objects_v2(Bucket=BUCKET)
-    all_songs_names = [obj['Key'] for obj in objects.get('Contents', [])]
+    song_names = [obj['Key'] for obj in objects.get('Contents', [])]
     
-    return all_songs_names
+    if song_names:
+        logger.info('Songs: %s', song_names)
+        return song_names
+    
+    return []
 
 
 # connect to RabbitMQ
