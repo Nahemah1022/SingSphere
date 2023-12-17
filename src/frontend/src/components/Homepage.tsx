@@ -21,7 +21,7 @@ const Homepage: React.FC = () => {
   }, []);
 
   return (
-    <div className="home-container">
+    <div className="bg-container">
 		<div className="home-background">
 			<img className='home-logo' src={logo} alt="Logo" />
 			<div className='title-container'>

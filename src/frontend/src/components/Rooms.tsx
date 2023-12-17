@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import logo from '../assets/logo.png';
+import Button from '@mui/material/Button';
 
 interface KTVroom {
   name: string;
@@ -24,12 +26,16 @@ function Rooms() {
     }
   };
 
-  const handleNewKTVroomClick = async () => {
+  const handleNewRoom = async () => {
     const newKTVroomId = uuidv4();
     navigate(`/${newKTVroomId}`);
 
     // Fetch ktv rooms after creating a new room
     await fetchKTVrooms();
+  };
+
+  const handleEnterCode = async () => {
+
   };
 
   // Fetch ktv rooms when mounting
@@ -38,17 +44,28 @@ function Rooms() {
   }, []);
 
   return (
-    <div>
-      <h1>KTV Rooms</h1>
-      <button onClick={handleNewKTVroomClick}>New KTVroom</button>
-      <ul>
-        {ktvrooms.map((room) => (
-          <li key={room.name}>
-            <Link to={`/${room.name}`}>{`KTVroom ${room.name} (${room.online} online)`}</Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <div className="bg-container">
+		<div className="rooms-background">
+			<img className='home-logo' src={logo} alt="Logo" />
+			<div className="room-list-container">
+				<div className="button-container">
+					<button className="new-room-button" onClick={handleNewRoom}>Create Room</button>
+					<button className="enter-code-button" onClick={handleNewRoom}>Enter Room Code</button>
+				</div>
+				<div className="rooms-caption">Join a room to start singing!</div>
+				<Button variant="contained" color="primary">
+					Test
+				</Button>
+				<ul>
+					{ktvrooms.map((room) => (
+					<li key={room.name}>
+						<Link to={`/${room.name}`}>{`KTVroom ${room.name} (${room.online} online)`}</Link>
+					</li>
+					))}
+				</ul>
+			</div>
+    	</div>
+	</div>
   );
 }
 
