@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import "./styles.css";
+import "./assets/styles.css";
 import { VoiceChat } from "./components/VoiceChat";
 import Homepage from './components/Homepage';
 import Rooms from './components/Rooms';
