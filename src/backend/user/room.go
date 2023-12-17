@@ -26,8 +26,8 @@ type Room struct {
 	leave           chan *User // Unregister requests from clients.
 	stereoTrack     *webrtc.Track
 	stereoPlaying   bool
-	requests        chan string // Songs requested from users
-	transcodedSongs chan string // Songs transcoded into OPUS after user requests
+	requests        chan string       // Songs requested from users
+	transcodedSongs chan *stereo.Song // Songs transcoded into OPUS after user requests
 	playlist        *playlist.Playlist
 }
 
@@ -89,7 +89,7 @@ func NewRoom(name string) *Room {
 		stereoTrack:     audioTrack,
 		stereoPlaying:   false,
 		requests:        requests,
-		transcodedSongs: make(chan string),
+		transcodedSongs: make(chan *stereo.Song),
 		playlist:        pl,
 	}
 }
@@ -103,9 +103,9 @@ func (r *Room) StereoPlay() {
 
 	log.Println("Stereo Start Playing")
 	for song := range r.transcodedSongs {
-		log.Printf("Playing Song: %s\n", song)
+		log.Printf("Playing Song: %s\n", song.Name)
 		ctx, ctxCancel := context.WithCancel(context.Background())
-		stereo.Play(song, r.stereoTrack, ctxCancel)
+		stereo.Play(song.Path, r.stereoTrack, ctxCancel)
 		<-ctx.Done()
 	}
 }

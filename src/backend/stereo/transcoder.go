@@ -11,15 +11,22 @@ import (
 
 	"github.com/pion/webrtc/v2"
 	"github.com/pion/webrtc/v2/pkg/media"
+	"github.com/tcolgate/mp3"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
+
+type Song struct {
+	Name     string
+	Path     string
+	Duration uint
+}
 
 var (
 	input_dir  = os.Getenv("TRANSCODE_INPUT_PATH")
 	output_dir = os.Getenv("TRANSCODE_OUTPUT_PATH")
 )
 
-func Trans(filename string, playlist chan<- string) {
+func Trans(filename string, playlist chan<- *Song) {
 	if input_dir == "" || output_dir == "" {
 		input_dir = "./s3"
 		output_dir = "./media"
@@ -33,18 +40,57 @@ func Trans(filename string, playlist chan<- string) {
 	}
 
 	err := ffmpeg.Input(inpath).
-		Output(outpath, ffmpeg.KwArgs{"c:a": "libopus", "page_duration": 20000, "loglevel": "debug"}).
+		Output(outpath, ffmpeg.KwArgs{"c:a": "libopus", "page_duration": 10000, "loglevel": "debug"}).
 		OverWriteOutput().ErrorToStdOut().Run()
 	if err != nil {
 		panic(err)
 	}
 	if _, err := os.Stat(outpath); errors.Is(err, os.ErrNotExist) {
-		log.Printf("converted file '%s' not found\n", outpath)
+		log.Printf("transcoded file '%s' not found\n", outpath)
 		return
 	}
 
 	log.Printf("convert to opus completed, output filepath: %s\n", outpath)
-	playlist <- outpath
+
+	t, err := getMP3Length(inpath)
+	if err != nil {
+		panic(err)
+	}
+
+	song := &Song{
+		Name:     filename,
+		Path:     outpath,
+		Duration: t,
+	}
+	log.Printf("song is enqueued: %v\n", song)
+	playlist <- song
+}
+
+func getMP3Length(file string) (uint, error) {
+	t := 0.0
+
+	r, err := os.Open(file)
+	if err != nil {
+		return 0, err
+	}
+
+	d := mp3.NewDecoder(r)
+	var f mp3.Frame
+	skipped := 0
+
+	for {
+		if err := d.Decode(&f, &skipped); err != nil {
+			if err == io.EOF {
+				break
+			}
+			fmt.Println(err)
+			return 0, err
+		}
+
+		t = t + f.Duration().Seconds()
+	}
+
+	return uint(t), nil
 }
 
 func Play(filepath string, targetTrack *webrtc.Track, cancel context.CancelFunc) {
