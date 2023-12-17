@@ -1,14 +1,20 @@
-import * as React from "react";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import "./styles.css";
-
-import { VoiceChat } from "./VoiceChat";
-// import { Storybook } from "./Components";
+import { VoiceChat } from "./components/VoiceChat";
+import Homepage from './components/Homepage';
+import Rooms from './components/Rooms';
+import SearchPage from './api/axios';
 
 export default function App() {
   return (
-    <div>
-      {/* <Storybook /> */}
-      <VoiceChat />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/rooms" element={<Rooms />} />
+        <Route path="/:id" element={<VoiceChat />} />
+		<Route path="/search" element={<SearchPage />} />
+      </Routes>
+    </Router>
   );
 }

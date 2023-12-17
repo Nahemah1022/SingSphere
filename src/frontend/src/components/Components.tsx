@@ -1,7 +1,7 @@
 // pure components and storybook-like sandbox
 import React, { useState } from "react";
 import css from "./VoiceChat.module.css";
-import { User } from "./api";
+import { User } from "../api/api";
 import AudioContextProvider, { useAudioContext } from "./context/audio";
 
 export const Storybook: React.FC = () => {
@@ -405,3 +405,32 @@ const IconSpeaker: React.FC<{
     </svg>
   );
 };
+
+interface ErrorBoundaryProps {
+	children: React.ReactNode;
+}
+export class ErrorBoundary extends React.Component<
+    ErrorBoundaryProps,
+    {
+        errorMessage: string | undefined;
+    }
+> {
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.state = { errorMessage: undefined };
+    }
+    static getDerivedStateFromError(error: Error) {
+        // Update state so the next render will show the fallback UI.
+        console.log("getDerivedStateFromError", error);
+        return { errorMessage: error.toString() };
+    }
+    componentDidCatch(error: Error, info: any) {
+        console.log("error here", error, info);
+    }
+    render() {
+        if (this.state.errorMessage) {
+            return <div>err: {this.state.errorMessage}</div>;
+        }
+        return this.props.children;
+    }
+}

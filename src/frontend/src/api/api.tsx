@@ -58,7 +58,7 @@ const defaultState: State = {
 };
 
 const StoreContext = React.createContext<Store | undefined>(undefined);
-export const StoreProvider: React.FC = ({ children }) => {
+export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, setState] = useState<State>(defaultState);
     const update = (partial: Partial<State>) => setState({ ...state, ...partial });
     const updateRoom = (partial: Partial<Room>): void => {

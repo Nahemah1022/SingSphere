@@ -1,15 +1,17 @@
 import * as React from "react";
 import { useRef, useState, useEffect } from "react";
-
-
 import css from "./VoiceChat.module.css";
-import { UserMe, UsersRemoteList, EmptyRoom } from "./Components";
-import { useStore, User, StoreProvider } from "./api";
-import AudioContextProvider, { useAudioContext } from './context/audio';
-import MediaStreamManagerProvider, { useMediaStreamManager } from './context/mediastream';
+import { UserMe, UsersRemoteList, EmptyRoom} from "./Components";
+import { useStore, User } from "../api/api";
+import { useAudioContext } from './context/audio';
+import { useMediaStreamManager } from './context/mediastream';
 import WebSocketTransport from './transport';
 
-const Conference = () => {
+interface ConferenceProps {
+  roomId: string;
+}
+
+const Conference = ({ roomId }: ConferenceProps) => {
     const audioContext = useAudioContext();
     const mediaStreamManager = useMediaStreamManager();
 
@@ -19,8 +21,7 @@ const Conference = () => {
 
     const [user, setUser] = useState<User>();
     const refTransport = useRef<WebSocketTransport>();
-    const WS_URL = `wss://sinsphere-api.nahemah.com/${window.location.pathname.replace("/", "")}`
-    // const WS_URL = `ws://127.0.0.1:8000/${window.location.pathname.replace("/", "")}`
+	const WS_URL = `wss://sinsphere-api.nahemah.com/${roomId}`;
     console.log(WS_URL)
     if (!refTransport.current) {
         refTransport.current = new WebSocketTransport(WS_URL);
@@ -123,7 +124,7 @@ const Conference = () => {
             }
         });
         return () => {
-            
+
         }
     }, [store, peerConnection, transport]);
 
@@ -233,58 +234,4 @@ const Conference = () => {
     );
 };
 
-export const VoiceChat = () => {
-    const refContainer = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        const set100vh = () => {
-            if (refContainer.current) {
-                refContainer.current.style.height = `${window.innerHeight}px`;
-            }
-        };
-        window.addEventListener("resize", set100vh);
-        set100vh();
-        return () => {
-            window.removeEventListener("resize", set100vh);
-        };
-    }, []);
-    return (
-        <AudioContextProvider>
-        <MediaStreamManagerProvider>
-            <StoreProvider>
-            <div className={css.container} ref={refContainer}>
-                <ErrorBoundary>
-                    <Conference />
-                </ErrorBoundary>
-            </div>
-            </StoreProvider>
-        </MediaStreamManagerProvider>
-        </AudioContextProvider>
-    );
-};
-
-interface ErrorBoundaryProps {}
-class ErrorBoundary extends React.Component<
-    ErrorBoundaryProps,
-    {
-        errorMessage: string | undefined;
-    }
-> {
-    constructor(props: ErrorBoundaryProps) {
-        super(props);
-        this.state = { errorMessage: undefined };
-    }
-    static getDerivedStateFromError(error: Error) {
-        // Update state so the next render will show the fallback UI.
-        console.log("getDerivedStateFromError", error);
-        return { errorMessage: error.toString() };
-    }
-    componentDidCatch(error: Error, info: any) {
-        console.log("error here", error, info);
-    }
-    render() {
-        if (this.state.errorMessage) {
-            return <div>err: {this.state.errorMessage}</div>;
-        }
-        return this.props.children;
-    }
-}
+export default Conference;

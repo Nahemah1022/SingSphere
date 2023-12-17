@@ -102,7 +102,7 @@ func (u *User) Wrap() *UserWrap {
 func (u *User) readPump() {
 	defer func() {
 		u.stop = true
-		u.pc.Close()
+		// u.pc.Close()
 		u.room.Leave(u)
 		u.conn.Close()
 	}()
@@ -263,6 +263,7 @@ func (u *User) HandleEvent(eventRaw []byte) error {
 		if event.Answer == nil {
 			return u.SendErr(errors.New("empty answer"))
 		}
+		time.Sleep(3000 * time.Millisecond)
 		u.pc.SetRemoteDescription(*event.Answer)
 		return nil
 	} else if event.Type == "candidate" {
@@ -330,6 +331,7 @@ func (u *User) HandleOffer(offer webrtc.SessionDescription) error {
 		}
 	}
 
+	time.Sleep(3000 * time.Millisecond)
 	// Set the remote SessionDescription
 	if err := u.pc.SetRemoteDescription(offer); err != nil {
 		return err
