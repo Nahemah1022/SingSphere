@@ -9,12 +9,12 @@ phases:
     commands:
       - echo Installing source NPM dependencies...
       - cd ./src/frontend
-      - yarn install
-      - npm i react-scripts@latest
+      - npm install
+      - npm i react-scripts@4.0.3
   build:
     commands:
       - echo Build stage started on 'date'
-      - yarn build
+      - npm build
       - mv ./build/* ../../
       - cd ../../
       - rm -Rf src docs README*
