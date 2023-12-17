@@ -5,7 +5,6 @@ import logging
 from requests_aws4auth import AWS4Auth
 from opensearchpy import OpenSearch, RequestsHttpConnection
 
-
 REGION = 'us-east-1'
 SERVICE = 'es'
 HOST = 'search-music-266fztddlp63e4bo5tdfhebwvu.aos.us-east-1.on.aws'
