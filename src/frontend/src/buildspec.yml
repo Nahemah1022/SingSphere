@@ -9,7 +9,7 @@ phases:
     commands:
       - echo Installing source NPM dependencies...
       - cd ./src/frontend
-      - npm install -g npm@8.19.4
+      - npm install -g npm@8.1.0
       - npm install
       - npm i react-scripts@4.0.3
   build:
