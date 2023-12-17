@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios, { AxiosRequestConfig, AxiosResponse, Method} from 'axios';
 //import { sign} from 'aws4';
 import {aws4Interceptor} from 'aws4-axios';
-import AWSCredentials from '../aws_creds_local';
+//import AWSCredentials from '../aws_creds_local'; //only for local
 
 interface Song {
   url: string;
@@ -25,9 +25,9 @@ const interceptor = aws4Interceptor({
   options: {
     region: "us-east-1",
 	service: "execute-api",
-//	assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine"
+//	assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine" //only for local
   },
-//  credentials: AWSCredentials,
+//  credentials: AWSCredentials, //only for local
 });
 
 client.interceptors.request.use(interceptor);
