@@ -185,3 +185,47 @@ body {
 	color: white;
 }
 
+.modal {
+	width: 50%;
+	height: 50%;
+	margin: auto;
+	margin-top: 10%;
+	background: linear-gradient(180deg, #E045B8, #FFCE85);
+	border: none;
+	box-shadow: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5em;
+}
+
+.modal-text {
+	margin-bottom: 1em;
+	font-size: 1.2em;
+	color: white;
+}
+
+.modal-input {
+	width: 400px;
+	margin-bottom: 1em;
+	background-color: white;
+	outline: none;
+	border: none;
+	box-shadow: none;
+}
+
+.modal-button {
+	margin-top: 1em;
+	outline: none;
+	border: none;
+	box-shadow: none;
+	width: 400px;
+	height: 3em;
+	color: white;
+	background-color: #E045B8;
+	font-size: 1em;
+}
+.modal-button:hover {
+	background-color: #dd1a89;
+}
