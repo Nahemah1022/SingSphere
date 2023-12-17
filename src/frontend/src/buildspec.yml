@@ -12,6 +12,7 @@ phases:
       - npm install -g npm@8.1.0
       - npm install
       - npm i react-scripts@4.0.3
+      - export NODE_OPTIONS=--openssl-legacy-provider
   build:
     commands:
       - echo Build stage started on 'date'
