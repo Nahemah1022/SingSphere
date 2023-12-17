@@ -84,6 +84,7 @@ def list_room():
     logger.error('Failed to retrieve room stats, status code: %s, data: %s', response.status_code, data)
     return []
 
+
 # list name of all songs from s3 without OpenSearch info
 def list_song():
     logger.info('Enter list_song')

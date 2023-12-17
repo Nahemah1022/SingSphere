@@ -22,9 +22,11 @@ def lambda_handler(event, context):
     search_term = event.get('queryStringParameters', {}).get('song', '').lower()
     
     s3_client = boto3.client("s3")
+
     if not search_term:
         logger.error("Empty seearch term received")
         return build_response(400, {"message": "Search term cannot be empty."})
+    
     if search_term == ALL:
         song_list = list_all_songs(s3_client)
         if not song_list:
@@ -35,9 +37,11 @@ def lambda_handler(event, context):
     try:
         open_search_results = search_songs_info(search_term)
         song_list = get_songs(s3_client, open_search_results)
+
         if not song_list:
             logger.info("Songs related to %s are not available", search_term)
             return build_response(404, {"message": f"No songs found matching the search term '{search_term}'. Please try a different search."})
+        
         return build_response(200, {"message": f"Retrievd song based on the search term '{search_term}'.", "results": song_list})
 
     except Exception as err:
@@ -55,7 +59,7 @@ def list_all_songs(s3_client):
     for obj in objects.get('Contents', []):
         meta_data = s3_client.head_object(Bucket=BUCKET, Key=obj['Key']).get('Metadata', {})
         list_url = s3_client.generate_presigned_url(ClientMethod='get_object', Params={'Bucket': BUCKET, 'Key': obj['Key']}, ExpiresIn=36000)
-        info = {'url': list_url, 'name': obj['Key'], 'labels': meta_data.get('customlabels', '').split(',')}
+        info = {'url': list_url, 'search_term': obj['Key'], 'labels': meta_data.get('customlabels', '').split(',')}
         song_list.append(info)
     
     return song_list
@@ -94,11 +98,11 @@ def search_songs_info(search_term):
 
 
 # build a query for OpenSearch
-def build_query(name):
-    if '.mp3' in name:
-        return {"size": 5, "query": {"match": {"_id": name}}}
+def build_query(search_term):
+    if '.mp3' in search_term:
+        return {"size": 5, "query": {"match": {"_id": search_term}}}
     else:
-        return {"size": 5, "query": {'multi_match': {'query': name}}}
+        return {"size": 5, "query": {'multi_match': {'query': search_term}}}
     
 
 # get AWS authentication for OpenSearch
