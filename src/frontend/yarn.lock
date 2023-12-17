@@ -2010,6 +2010,13 @@
   "resolved" "https://registry.npmjs.org/@mui/core-downloads-tracker/-/core-downloads-tracker-5.15.0.tgz"
   "version" "5.15.0"
 
+"@mui/icons-material@^5.15.0":
+  "integrity" "sha512-zHY6fOkaK7VfhWeyxO8MjO3IAjEYpYMXuqUhX7TkUZJ9+TSH/9dn4ClG4K2j6hdgBU5Yrq2Z/89Bo6BHHp7AdQ=="
+  "resolved" "https://registry.npmjs.org/@mui/icons-material/-/icons-material-5.15.0.tgz"
+  "version" "5.15.0"
+  dependencies:
+    "@babel/runtime" "^7.23.5"
+
 "@mui/material@^5.15.0":
   "integrity" "sha512-60CDI/hQNwJv9a3vEZtFG7zz0USdQhVwpBd3fZqrzhuXSdiMdYMaZcCXeX/KMuNq0ZxQEAZd74Pv+gOb408QVA=="
   "resolved" "https://registry.npmjs.org/@mui/material/-/material-5.15.0.tgz"

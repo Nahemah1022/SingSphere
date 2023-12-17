@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import logo from '../assets/logo.png';
-import Button from '@mui/material/Button';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import Divider from '@mui/material/Divider';
+import Paper from '@mui/material/Paper';
+import PersonIcon from '@mui/icons-material/Person';
 
 interface KTVroom {
   name: string;
@@ -53,16 +60,24 @@ function Rooms() {
 					<button className="enter-code-button" onClick={handleNewRoom}>Enter Room Code</button>
 				</div>
 				<div className="rooms-caption">Join a room to start singing!</div>
-				<Button variant="contained" color="primary">
-					Test
-				</Button>
-				<ul>
-					{ktvrooms.map((room) => (
-					<li key={room.name}>
-						<Link to={`/${room.name}`}>{`KTVroom ${room.name} (${room.online} online)`}</Link>
-					</li>
-					))}
-				</ul>
+				<Paper className="scroll" style = {{backgroundColor: 'transparent'}}>
+					<List className="room-list">
+						{ktvrooms.map((room) => (
+							<React.Fragment key={room.name}>
+							<ListItem disablePadding className="list-item">
+								<ListItemButton component={Link} to={`/${room.name}`}>
+								<ListItemText className="list-text" primary={`Room ${room.name}`} />
+								<ListItemIcon>
+									<PersonIcon className="list-text" />
+									<ListItemText className="list-text" primary={`${room.online}`} />
+								</ListItemIcon>
+								</ListItemButton>
+							</ListItem>
+							<Divider />
+							</React.Fragment>
+						))}
+					</List>
+				</Paper>
 			</div>
     	</div>
 	</div>
