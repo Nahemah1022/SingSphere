@@ -20,6 +20,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const { state, update } = store;
 
     const [user, setUser] = useState<User>();
+    const [volume, setVolume] = useState<number>(5);
     const refTransport = useRef<WebSocketTransport>();
 	const WS_URL = `wss://sinsphere-api.nahemah.com/${roomId}`;
     console.log(WS_URL)
@@ -37,10 +38,13 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const subscribe = async () => {
         peerConnection.ontrack = async (event: RTCTrackEvent) => {
             console.log(`peerConnection::ontrack ${event.track.kind}`);
-            console.log(event.streams);
             const stream = event.streams[0];
             try {
                 const audio = document.createElement("audio");
+                if (event.track.label === "stereo") {
+                    audio.volume = volume / 10;
+                    audio.classList.add("stereo_audio");
+                }
                 audio.srcObject = stream;
                 audio.autoplay = true;
                 audio.play();
@@ -196,6 +200,8 @@ const Conference = ({ roomId }: ConferenceProps) => {
                 <div className={css.bottom}>
                     {user && (
                         <UserMe
+                            volume={volume}
+                            setVolume={setVolume}
                             user={user}
                             isMutedMicrophone={state.isMutedMicrophone}
                             isMutedSpeaker={state.isMutedSpeaker}
