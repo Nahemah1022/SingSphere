@@ -119,13 +119,16 @@ const Conference = ({ roomId }: ConferenceProps) => {
                     throw new Error("no user");
                 }
                 store.api.roomUserUpdate(event.user);
+            } else if (event.type === "enqueue") {
+                alert("enqueued");
+                console.log(event.song);
+            } else if (event.type === "next_song") {
+                alert("next_song");
+                console.log(event.song);
             } else {
                 throw new Error(`type ${event.type} not implemented`);
             }
         });
-        return () => {
-
-        }
     }, [store, peerConnection, transport]);
 
     const renderUsers = () => {

@@ -12,13 +12,22 @@ export interface TransportEvent {
         | "user_leave"
         | "room"
         | "mute"
-        | "unmute";
+        | "unmute"
+        | "enqueue"
+        | "next_song";
 
     offer?: RTCSessionDescriptionInit;
     answer?: RTCSessionDescriptionInit;
     candidate?: RTCIceCandidateInit;
     user?: User;
     room?: Room;
+    song?: Song;
+}
+
+export interface Song {
+    name: string;
+    path: string;
+    duration: number;
 }
 
 export interface User {
