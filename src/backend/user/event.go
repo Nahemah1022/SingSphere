@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Nahemah1022/singsphere-backend/stereo"
 	"github.com/pion/webrtc/v2"
 )
 
@@ -17,6 +18,7 @@ type Event struct {
 	User      *UserWrap                  `json:"user,omitempty"`
 	Room      *RoomWrap                  `json:"room,omitempty"`
 	Desc      string                     `json:"desc,omitempty"`
+	Song      *stereo.Song               `json:"song,omitempty"`
 }
 
 // SendEvent sends json body to web socket

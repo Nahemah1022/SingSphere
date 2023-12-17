@@ -14,7 +14,6 @@ var conn, _ = amqp.Dial("amqps://singsphere:singsphere123@b-dd7ec1e7-2096-4e6a-9
 type Playlist struct {
 	queue   amqp.Queue
 	channel *amqp.Channel
-	Songs   chan string
 }
 
 func New() *Playlist {

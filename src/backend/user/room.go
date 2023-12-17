@@ -104,6 +104,7 @@ func (r *Room) StereoPlay() {
 	log.Println("Stereo Start Playing")
 	for song := range r.transcodedSongs {
 		log.Printf("Playing Song: %s\n", song.Name)
+		r.BroadcastSong("next_song", song)
 		ctx, ctxCancel := context.WithCancel(context.Background())
 		stereo.Play(song.Path, r.stereoTrack, ctxCancel)
 		<-ctx.Done()
@@ -152,6 +153,15 @@ func (r *Room) GetUsersCount() int {
 	return len(r.GetUsers())
 }
 
+// Broadcast enqueue/nextsong event to room's users
+func (r *Room) BroadcastSong(operation string, song *stereo.Song) {
+	for _, u := range r.users {
+		if err := u.SendEvent(Event{Type: operation, Song: song}); err != nil {
+			panic(err)
+		}
+	}
+}
+
 func (r *Room) run() {
 	for {
 		select {
@@ -178,7 +188,15 @@ func (r *Room) run() {
 				}
 			}
 		case encoded := <-r.requests:
-			go stereo.Trans(encoded, r.transcodedSongs)
+			// the transcoded songs won't be played immediately, but we still need
+			// an immediate notification from transcoder about whether the song is
+			// successfully enqueued (might fail to transcode or doesn't exist)
+			// therefore, here we use this additional channel to receive the notification
+			successCh := make(chan *stereo.Song)
+			go stereo.Trans(encoded, r.transcodedSongs, successCh)
+			if song := <-successCh; song != nil {
+				r.BroadcastSong("enqueue", song)
+			}
 		}
 	}
 }

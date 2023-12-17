@@ -16,9 +16,9 @@ import (
 )
 
 type Song struct {
-	Name     string
-	Path     string
-	Duration uint
+	Name     string `json:"name"`
+	Path     string `json:"path"`
+	Duration uint   `json:"duration"`
 }
 
 var (
@@ -26,7 +26,7 @@ var (
 	output_dir = os.Getenv("TRANSCODE_OUTPUT_PATH")
 )
 
-func Trans(filename string, playlist chan<- *Song) {
+func Trans(filename string, playlist chan<- *Song, success chan<- *Song) {
 	if input_dir == "" || output_dir == "" {
 		input_dir = "./s3"
 		output_dir = "./media"
@@ -36,6 +36,7 @@ func Trans(filename string, playlist chan<- *Song) {
 	inpath := fmt.Sprintf("%s/%s", input_dir, filename)
 	if _, err := os.Stat(inpath); errors.Is(err, os.ErrNotExist) {
 		log.Printf("requested file '%s' not found\n", inpath)
+		success <- nil
 		return
 	}
 
@@ -43,9 +44,11 @@ func Trans(filename string, playlist chan<- *Song) {
 		Output(outpath, ffmpeg.KwArgs{"c:a": "libopus", "page_duration": 10000, "loglevel": "debug"}).
 		OverWriteOutput().ErrorToStdOut().Run()
 	if err != nil {
+		success <- nil
 		panic(err)
 	}
 	if _, err := os.Stat(outpath); errors.Is(err, os.ErrNotExist) {
+		success <- nil
 		log.Printf("transcoded file '%s' not found\n", outpath)
 		return
 	}
@@ -54,6 +57,7 @@ func Trans(filename string, playlist chan<- *Song) {
 
 	t, err := getMP3Length(inpath)
 	if err != nil {
+		success <- nil
 		panic(err)
 	}
 
@@ -63,6 +67,7 @@ func Trans(filename string, playlist chan<- *Song) {
 		Duration: t,
 	}
 	log.Printf("song is enqueued: %v\n", song)
+	success <- song
 	playlist <- song
 }
 
