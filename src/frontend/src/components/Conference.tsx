@@ -50,6 +50,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const mediaStreamManager = useMediaStreamManager();
 	const [user, setUser] = useState<User>();
 	const [showConference, setShowConference] = useState<boolean>(false);
+    const [volume, setVolume] = useState<number>(5);
 
 	const store = useStore();
     const { state, update } = store;
@@ -84,6 +85,10 @@ const Conference = ({ roomId }: ConferenceProps) => {
             const stream = event.streams[0];
             try {
                 const audio = document.createElement("audio");
+                if (event.track.label === "stereo") {
+                    audio.volume = volume / 10;
+                    audio.classList.add("stereo_audio");
+                }
                 audio.srcObject = stream;
                 audio.autoplay = true;
                 audio.play();
@@ -282,6 +287,8 @@ const Conference = ({ roomId }: ConferenceProps) => {
                 <div className={css.bottom}>
                     {user && (
                         <UserMe
+                            volume={volume}
+                            setVolume={setVolume}
                             user={user}
                             isMutedMicrophone={state.isMutedMicrophone}
                             isMutedSpeaker={state.isMutedSpeaker}
