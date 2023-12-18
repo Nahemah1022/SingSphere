@@ -18,6 +18,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import { ColorRing } from 'react-loader-spinner';
 
 interface ConferenceProps {
   roomId: string;
@@ -59,6 +60,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [songs, setSongs] = useState<Song[]>([]);
 	const [open, setOpen] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
 
@@ -256,13 +258,15 @@ const Conference = ({ roomId }: ConferenceProps) => {
 				else {
 					formattedTerm = searchTerm;
 				}
-
+                
+                setIsSearching(true);
 				const response = await axios.get(`https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/GET/?song=${formattedTerm}`);
 				console.log(response);
+                setIsSearching(false);
 				setSongs(response.data.results);
-			}
-			catch (error) {
+			} catch (error) {
 				setSongs([]);
+                setIsSearching(false);
 				console.error('Error fetching data:', error);
 			}
 		};
@@ -367,7 +371,15 @@ const Conference = ({ roomId }: ConferenceProps) => {
 								<button className={css.searchSong} onClick={() => handleSearch("song")}>Search Song</button>
 								<button className={css.searchCategory} onClick={() => handleSearch("category")}>Search Category</button>
 							</div>
-
+                            <ColorRing
+                                visible={isSearching}
+                                height="80"
+                                width="80"
+                                ariaLabel="blocks-loading"
+                                wrapperStyle={{}}
+                                wrapperClass="blocks-wrapper"
+                                colors={['#e15b64', '#f47e60', '#f8b26a', '#abbd81', '#849b87']}
+                                />
 							<div className={css.searchResults}>
 								{songs.length === 0 ? (
 									<p className={css.searchMsg}>No search results</p>
