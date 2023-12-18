@@ -256,10 +256,11 @@ const Conference = ({ roomId }: ConferenceProps) => {
 			};
 
 			const base64RequestBody = Buffer.from(JSON.stringify(requestBody)).toString('base64');
+            console.log(base64RequestBody)
+            let res = await axios.post("https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/final-music", base64RequestBody)
+            console.log(res)
 
-			const response = await axios.post(url, base64RequestBody, {headers: {'Content-Type': 'text/plain'}});
-
-			console.log('Song queued successfully:', response.data);
+			// console.log('Song queued successfully:', response.data);
 			} catch (error) {
 			console.error('Error queuing song:', error);
 			}
