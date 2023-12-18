@@ -1,23 +1,26 @@
 import * as React from "react";
 import { useRef, useState, useEffect } from "react";
 import css from "./VoiceChat.module.css";
-import { UserMe, UsersRemoteList, EmptyRoom} from "./Components";
+import vid from '../assets/background.mp4';
+
+import { UsersRemoteList, EmptyRoom, ButtonMicrohone, ButtonSpeaker} from "./Components";
 import { useStore, User } from "../api/api";
 import { useAudioContext } from './context/audio';
 import { useMediaStreamManager } from './context/mediastream';
+
 import WebSocketTransport from './transport';
 import AppBar from '@mui/material/AppBar';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
 import axios from 'axios';
-import {aws4Interceptor} from 'aws4-axios';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
+import ImageList from '@mui/material/ImageList';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search';
+import InputRange from 'react-input-range';
 
 interface ConferenceProps {
   roomId: string;
@@ -28,22 +31,6 @@ interface Song {
   search_term: string;
   labels: string[];
 }
-
-//const client = axios.create();
-
-//const interceptor = aws4Interceptor({
-//	options: {
-//		region: "us-east-1",
-//		service: "execute-api",
-//		assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine"
-//	},
-//	credentials: {
-//		accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
-//		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ""
-//	}
-//});
-
-//client.interceptors.request.use(interceptor);
 
 const Conference = ({ roomId }: ConferenceProps) => {
     const audioContext = useAudioContext();
@@ -298,38 +285,12 @@ const Conference = ({ roomId }: ConferenceProps) => {
 
         return (
             <div className={css.wrapper}>
-                <div className={css.top}>{renderUsers()}</div>
-                <div className={css.bottom}>
-                    {user && (
-                        <UserMe
-                            volume={volume}
-                            setVolume={setVolume}
-                            user={user}
-                            isMutedMicrophone={state.isMutedMicrophone}
-                            isMutedSpeaker={state.isMutedSpeaker}
-                            onClickMuteSpeaker={() => {
-                                try {
-                                update({ isMutedSpeaker: !state.isMutedSpeaker });
-                                } catch (error) {
-                                alert(error);
-                                }
-                            }}
-                            onClickMuteMicrohone={async (event) => {
-                                if (!mediaStreamManager.isMicrophoneRequested) {
-                                    await mediaStreamManager.requestMicrophone();
-                                }
-                                if (mediaStreamManager.isMicrophoneMuted) {
-                                    mediaStreamManager.microphoneUnmute();
-                                    transport.sendEvent({ type: "unmute", user });
-                                    update({ isMutedMicrophone: false });
-                                } else {
-                                    mediaStreamManager.microphoneMute();
-                                    transport.sendEvent({ type: "mute", user });
-                                    update({ isMutedMicrophone: true });
-                                }
-                            }}
-                        />
-                    )}
+                <div className={css.userContainer}>{renderUsers()}</div>
+                <div className={css.displayContainer}>
+					<video width="100%" height="100%" controls autoPlay>
+						<source src={vid} type="video/mp4" />
+						Your browser does not support the video tag.
+					</video>
 					<AppBar style={{
 						height: '4em',
 						backgroundColor: '#1F2937',
@@ -343,9 +304,67 @@ const Conference = ({ roomId }: ConferenceProps) => {
 						bottom: '0',
 						flexGrow: '1'
 					}}>
-						<button className={css.addSong} onClick={handleOpen}>
-							<MusicNoteIcon style={{ color: 'white'}} />
-						</button>
+						<div className={css.buttons}>
+							<div className={css.mutebuttons}>
+								<ButtonMicrohone
+									muted={state.isMutedMicrophone}
+									onClick={async (event) => {
+										if (!mediaStreamManager.isMicrophoneRequested) {
+											await mediaStreamManager.requestMicrophone();
+										}
+										if (mediaStreamManager.isMicrophoneMuted) {
+											mediaStreamManager.microphoneUnmute();
+											transport.sendEvent({ type: "unmute", user });
+											update({ isMutedMicrophone: false });
+										} else {
+											mediaStreamManager.microphoneMute();
+											transport.sendEvent({ type: "mute", user });
+											update({ isMutedMicrophone: true });
+										}
+									}}
+								/>
+								<ButtonSpeaker
+									muted={state.isMutedSpeaker}
+									onClick={() => {
+										try {
+										update({ isMutedSpeaker: !state.isMutedSpeaker });
+										} catch (error) {
+										alert(error);
+										}
+									}}
+								/>
+							</div>
+							<button className={css.addSong} onClick={handleOpen}>
+								<MusicNoteIcon style={{ color: 'white'}} />
+							</button>
+							<div className={css.volumeContainer}>
+								<InputRange
+									classNames={{
+										activeTrack: "input-range__track input-range__track--active",
+										disabledInputRange:"input-range input-range--disabled",
+										inputRange:"input-range",
+										labelContainer:"input-range__label-container",
+										maxLabel:"input-range__label input-range__label--max",
+										minLabel:"input-range__label input-range__label--min",
+										slider:"input-range__slider",
+										sliderContainer:"input-range__slider-container",
+										track:"input-range__track input-range__track--background",
+										valueLabel:"input-range__label input-range__label--value",
+									}}
+									maxValue={10}
+									minValue={0}
+									value={volume}
+									onChange={(value) => {
+										setVolume(value as any)
+										let stereoAudio = document.querySelectorAll(".stereo_audio") as NodeListOf<HTMLAudioElement>;
+										if (stereoAudio.length !== 0) {
+											stereoAudio[0].volume = value as any / 10;
+										}
+										console.log(value)
+									}}
+								/>
+							</div>
+						</div>
 					</AppBar>
 
 					<Modal
