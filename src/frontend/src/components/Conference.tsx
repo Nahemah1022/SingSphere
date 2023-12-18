@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useRef, useState, useEffect } from "react";
 import css from "./VoiceChat.module.css";
-import bggif from "../assets/bggif.gif"
+import bggif from "../assets/bggif2.gif"
 import { UsersRemoteList, EmptyRoom, ButtonMicrohone, ButtonSpeaker} from "./Components";
 import { useStore, User } from "../api/api";
 import { useAudioContext } from './context/audio';
@@ -43,13 +43,17 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const { state, update } = store;
 
 	// For searching and queueing songs
-	const [searchTerm, setSearchTerm] = useState('');
+	const [searchTerm, setSearchTerm] = useState<string>('');
 	const [songs, setSongs] = useState<Song[]>([]);
-	const [open, setOpen] = useState(false);
-    const [isSearching, setIsSearching] = useState(false);
-	const [alertContent, setAlertContent] = useState('');
+	const [open, setOpen] = useState<boolean>(false);
+    const [isSearching, setIsSearching] = useState<boolean>(false);
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
+
+	// For counting down song duration
+	const [startCounting, setStartCounting] = useState<boolean>(false);
+	const [duration, setDuration] = useState<number>(0);
+
 
 	// For formatting the result list by removing '_', capitalizing, and removing '.mp3'
 	const capitalizeAndFormat = (str: string): string => (
@@ -59,6 +63,31 @@ const Conference = ({ roomId }: ConferenceProps) => {
 			.replace(/\b\w/g, (match) => match.toUpperCase())
 	);
 
+	// Format the seconds into MM:SS format
+	const formatTime = (timeInSeconds: number): string => {
+		const minutes: number = Math.floor(timeInSeconds / 60);
+		const seconds: number = timeInSeconds % 60;
+		const formattedMinutes: string = minutes < 10 ? `0${minutes}` : minutes.toString();
+		const formattedSeconds: string = seconds < 10 ? `0${seconds}` : seconds.toString();
+		return `${formattedMinutes}:${formattedSeconds}`;
+	};
+
+	useEffect(() => {
+		let countdownInterval: NodeJS.Timeout;
+
+		if (startCounting && duration > 0) {
+			countdownInterval = setInterval(() => {
+				setDuration((prevDuration) => prevDuration - 1);
+			}, 1000);
+		}
+
+		return () => {
+			// Clear the interval when the component unmounts or when startCounting becomes false
+			clearInterval(countdownInterval);
+		};
+  	}, [startCounting]);
+
+	// Transport / Websocket
     const refAudioEl = useRef<HTMLAudioElement | null>(null);
 
     const refTransport = useRef<WebSocketTransport>();
@@ -181,7 +210,8 @@ const Conference = ({ roomId }: ConferenceProps) => {
 				}
 
 				if (duration) {
-
+					setDuration(duration);
+					setStartCounting(true);
 				}
 
                 console.log(event.song);
@@ -304,12 +334,14 @@ const Conference = ({ roomId }: ConferenceProps) => {
 
         return (
             <div className={css.wrapper}>
+				<div className={css.countDown}>🪩 Time Remaining: {formatTime(duration)}</div>
 				<ToastContainer />
                 <div className={css.userContainer}>{renderUsers()}</div>
                 <div className={css.displayContainer}>
+
 					<img src={bggif} width="100%" height="100%" />
 					<AppBar style={{
-						height: '4em',
+						height: '5em',
 						backgroundColor: '#1F2937',
 						boxShadow: 'none',
 						outline: 'none',

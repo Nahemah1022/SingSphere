@@ -149,7 +149,7 @@ export const EmptyRoom = () => {
       >
         <span role="img" aria-labelledby="eyes">👀</span>
       </div>
-      <div style={{ textAlign: "center", fontSize: 16, color: "white", width: '5em' }}>
+      <div style={{ textAlign: "center", fontSize: 16, color: "white", width: '10em' }}>
         Empty <br /> Room
       </div>
     </div>
@@ -280,7 +280,7 @@ export const UserRemote: React.FC<{
   return (
     <div
       style={{
-        width: 60,
+        width: "8em",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -289,7 +289,7 @@ export const UserRemote: React.FC<{
         position: "relative",
         backgroundColor: "rgba(0,0,0,0.1)",
         borderRadius: 16,
-        padding: 10,
+        padding: "1em",
       }}
       key={user.id}
     >
