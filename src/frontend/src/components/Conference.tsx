@@ -233,16 +233,28 @@ const Conference = ({ roomId }: ConferenceProps) => {
 
 		//For searching and queueing songs
 		//Sent GET request to retrieve songs
-		const handleSearch = async () => {
+		const handleSearch = async (option: string) => {
 			try {
-			const response = await axios.get(
-				`https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/GET/?song=${searchTerm}`
-			);
-			console.log(response);
+				let formattedTerm = ""
+				if (option == 'song'){
+					// Change all the spaces to underscore and make all characters lowercase
+					formattedTerm = searchTerm.replace(/ /g, '_').toLowerCase();
 
-			setSongs(response.data.results);
+					// Add .mp3 if there's no mp3 extension on the search term
+					if (!formattedTerm.endsWith('.mp3')) {
+						formattedTerm += '.mp3';
+					}
+				}
+				else {
+					formattedTerm = searchTerm;
+				}
+
+				const response = await axios.get(`https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/GET/?song=${formattedTerm}`);
+				console.log(response);
+				setSongs(response.data.results);
 			}
 			catch (error) {
+				setSongs([]);
 				console.error('Error fetching data:', error);
 			}
 		};
@@ -341,7 +353,9 @@ const Conference = ({ roomId }: ConferenceProps) => {
 									onChange={(e) => setSearchTerm(e.target.value)}
 									className={css.searchInput}
 								/>
-								<button className={css.searchIcon} onClick={handleSearch}><SearchIcon /></button>
+								<button className={css.searchArtist} onClick={() => handleSearch("artist")}>Search Artist</button>
+								<button className={css.searchSong} onClick={() => handleSearch("song")}>Search Song</button>
+								<button className={css.searchCategory} onClick={() => handleSearch("category")}>Search Category</button>
 							</div>
 
 							<div className={css.searchResults}>
