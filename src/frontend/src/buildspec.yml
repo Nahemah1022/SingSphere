@@ -19,6 +19,7 @@ phases:
       - mv ./build/* ../../
       - cd ../../
       - rm -Rf src docs README*
+      - aws cloudfront create-invalidation --distribution-id E1DA1UH6E82GH9 --paths /*
 artifacts:
   files:
     - "**/*"
