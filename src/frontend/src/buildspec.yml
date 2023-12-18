@@ -1,0 +1,25 @@
+version: 0.2
+phases:
+  install:
+    #If you use the Ubuntu standard image 2.0 or later, you must specify runtime-versions.
+    #If you specify runtime-versions and use an image other than Ubuntu standard image 2.0, the build fails.
+    runtime-versions:
+      nodejs: 16
+  pre_build:
+    commands:
+      - echo Installing source NPM dependencies...
+      - cd ./src/frontend
+      - npm install -g npm@8.1.0
+      - npm install --force
+      - npm i react-scripts@4.0.3
+  build:
+    commands:
+      - echo Build stage started on 'date'
+      - npm run build
+      - mv ./build/* ../../
+      - cd ../../
+      - rm -Rf src docs README*
+      # - aws cloudfront create-invalidation --distribution-id E1DA1UH6E82GH9 --paths /*
+artifacts:
+  files:
+    - "**/*"

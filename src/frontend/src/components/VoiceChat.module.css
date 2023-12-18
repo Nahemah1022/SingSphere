@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+.container {
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: "Urbanist", Helvetica, sans-serif;
+}
+
+.wrapper {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.speakButton {
+  width: 100px;
+  height: 100px;
+  border-radius: 50px;
+  border: 1px solid black;
+  cursor: pointer;
+}
+
+.speakButton:active {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.buttonMicrophone {
+  height: 60px;
+  width: 60px;
+  border-radius: 4px;
+  background-color: transparent;
+  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline-width: 0;
+  border-width: 0;
+  cursor: pointer;
+}
+
+.buttonMicrophone:hover {
+  background-color: rgba(0, 0, 0, 0.13);
+}
+.buttonMicrophone:active {
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+}
+
+.buttonJoin {
+  font-size: 1.6rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 0;
+  border-radius: 32px;
+  padding: 10px 40px;
+  color: white;
+  /* user-select: none; */
+  outline-width: 0;
+  cursor: pointer;
+}
+.buttonJoin:active {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.top {
+  flex-grow: 2;
+  background-color: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom {
+  background-color: rgba(183, 49, 49, 0.3);
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.addSong {
+	background: linear-gradient(180deg, #E045B8, #FFCE85);
+	width: 10em;
+	height: 3em;
+	border: none;
+	outline: none;
+	box-shadow: none;
+	border-radius: 0.5em;
+}
+
+.roomModal {
+	width: 50%;
+	height: 70%;
+	margin: auto;
+	margin-top: 5%;
+	background: linear-gradient(180deg, #E045B8, #FFCE85);
+	color: white;
+	border: none;
+	box-shadow: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5em;
+}
+
+.searchBar {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	margin: 1em;
+}
+
+.searchInput {
+	border-radius: 5em;
+	width: 100%;
+	height: 45px;
+	border: none;
+	outline: none;
+	box-shadow: none;
+	padding-left: 1em;
+	margin: 0.2em;
+}
+
+.searchArtist, .searchSong, .searchCategory {
+	background-color: #E045AB;
+	color: white;
+	border: none;
+	outline: none;
+	box-shadow: none;
+	border-radius: 6em;
+	font-size: 0.8em;
+	padding-left: 0.2em;
+	padding-right: 0.2em;
+	padding-top: 0.1em;
+	padding-bottom: 0.1em;
+	margin: 0.2em;
+	min-width: 8.5em;
+	height: 50px;
+}
+.searchArtist:hover {
+	background-color: #dd1a89;
+}
+.searchSong {
+	background-color: #7B61FF;
+}
+.searchSong:hover {
+	background-color: rgb(92, 59, 252);
+}
+.searchCategory {
+	background-color: #ffab2c;
+}
+.searchCategory:hover {
+	background-color: #ff8e03;
+}
+
+.searchResults {
+	margin-top: 20px;
+	width: 100%;
+	flex-grow: 3;
+}
+
+.resultItems {
+	margin: auto;
+	padding: 10px;
+	border-bottom: 1px solid white;
+	width: 100%;
+}
+
+.addButton {
+	margin-left: 10px;
+	background-color: #FFB951;
+	color: white;
+	outline: none;
+	border: none;
+	box-shadow: none;
+	width: 7em;
+	border-radius: 5em;
+}
+
+.searchMsg {
+	width: 100%;
+	text-align: center;
+	padding: 0;
+	margin: 0;
+}
+
+.artist {
+	display: flex;
+	justify-content: flex-end;
+	margin-right: 1em;
+}

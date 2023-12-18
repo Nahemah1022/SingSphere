@@ -1,11 +1,11 @@
-import { TransportEvent } from '../api'
+import { TransportEvent } from '../../api/api'
 
 interface Transport {
     sendOffer: (sessionDescription: RTCSessionDescriptionInit) => void;
     sendAnswer: (sessionDescription: RTCSessionDescriptionInit) => void;
     sendCandidate: (candidate: RTCIceCandidateInit) => void;
     sendEvent: (event: TransportEvent) => void;
-  
+
     onOpen: (callback: () => void) => void;
     onOffer: (
       callback: (sessionDescription: RTCSessionDescriptionInit) => void
@@ -15,7 +15,7 @@ interface Transport {
     ) => void;
     onCandidate: (callback: (candidate: RTCIceCandidateInit) => void) => void;
 }
-  
+
 export default class WebSocketTransport implements Transport {
     private ws: WebSocket;
     private onOfferCallback: (
@@ -55,10 +55,10 @@ export default class WebSocketTransport implements Transport {
         console.log("[transport]sendEvent", event.type);
         this.ws.send(JSON.stringify(event));
     }
-  
+
     private onMessage(event: MessageEvent) {
         const data = JSON.parse(event.data) as TransportEvent;
-    
+
         if (data.type === "answer" && data.answer) {
             return this.onAnswerCallback(data.answer);
         } else if (data.type === "offer" && data.offer) {
@@ -71,7 +71,7 @@ export default class WebSocketTransport implements Transport {
             this.onEventCallback(data);
         }
     }
-  
+
     public onOpen(callback: () => void): void {
         this.onOpenCallback = callback;
     }
