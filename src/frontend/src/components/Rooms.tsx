@@ -101,7 +101,7 @@ function Rooms() {
 				</Box>
 				</Modal>
 				<div className="rooms-caption">Join a room to start singing!</div>
-				<Paper className="scroll" style = {{backgroundColor: 'transparent'}}>
+				<Paper className="scroll" style = {{backgroundColor: 'transparent', boxShadow: 'none'}}>
 					<List className="room-list">
 						{ktvrooms.map((room) => (
 							<React.Fragment key={room.name}>

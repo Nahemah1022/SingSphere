@@ -323,39 +323,30 @@ const Conference = ({ roomId }: ConferenceProps) => {
 					>
 						<Box className={css.roomModal}>
 							<div className={css.searchBar}>
-							<input
-								type="text"
-								id="songName"
-								value={songName}
-								onChange={(e) => setSongName(e.target.value)}
-								className={css.searchInput}
-							/>
-							{/*
-							<TextField
-								label="Search"
-								variant="outlined"
-								fullWidth
-								onChange={(e) => setSongName(e.target.value)}
-								className={css.searchInput}
-							/>
-							*/}
-							<button className={css.searchIcon} onClick={handleSearch}><SearchIcon /></button>
+								<input
+									type="text"
+									id="songName"
+									value={songName}
+									onChange={(e) => setSongName(e.target.value)}
+									className={css.searchInput}
+								/>
+								<button className={css.searchIcon} onClick={handleSearch}><SearchIcon /></button>
 							</div>
 
 							<div className={css.searchResults}>
-							{songs.length === 0 ? (
-								<p>No search results</p>
-							) : (
-								<List>
-								{songs.map((result,index) => (
-									<ListItem key={index} className={css.resultItems}>
-									<ListItemText primary={result.search_term} />
-									<ListItemText primary={result.labels[0]}/>
-									<button className={css.addButton} onClick={() => queueSong(result)}><AddIcon /></button>
-									</ListItem>
-								))}
-								</List>
-							)}
+								{songs.length === 0 ? (
+									<p>No search results</p>
+								) : (
+									<List>
+									{songs.map((result,index) => (
+										<ListItem key={index} className={css.resultItems}>
+										<ListItemText primary={result.search_term} />
+										<ListItemText primary={result.labels[0]} />
+										<button className={css.addButton} onClick={() => queueSong(result)}><AddIcon /></button>
+										</ListItem>
+									))}
+									</List>
+								)}
 							</div>
 						</Box>
 					</Modal>
