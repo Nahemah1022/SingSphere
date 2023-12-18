@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import axios, { AxiosRequestConfig, AxiosResponse, Method} from 'axios';
+import axios from 'axios';
 //import { sign} from 'aws4';
 import {aws4Interceptor} from 'aws4-axios';
 //import AWSCredentials from '../aws_creds_local'; //only for local
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface Song {
   url: string;
@@ -35,6 +43,9 @@ client.interceptors.request.use(interceptor);
 const SearchPage = () => {
   const [songName, setSongName] = useState('');
   const [songs, setSongs] = useState<Song[]>([]);
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   const handleSearch = async () => {
     try {
@@ -98,32 +109,72 @@ const SearchPage = () => {
     }
   };
 
+
   return (
-    <div>
-      <h1>Search Page</h1>
-      <div>
-        <label htmlFor="songName">Song Name:</label>
-        <input
-          type="text"
-          id="songName"
-          value={songName}
-          onChange={(e) => setSongName(e.target.value)}
-        />
-        <button onClick={handleSearch}>Search</button>
-      </div>
-      <div>
-        <h2>Search Results:</h2>
-        <ul>
-          {songs.map((result, index) => (
-            <li key={index}>
-              {result.search_term} - {result.labels.join(', ')}
-              <button onClick={() => queueSong(result)}>Queue Song</button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+	<Modal
+	  open={open}
+      onClose={handleClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+    >
+      <Box className="roomModal">
+        {/* Search Bar */}
+        <div className="search-bar">
+          <TextField
+            label="Search"
+            variant="outlined"
+            fullWidth
+            onChange={(e) => setSongName(e.target.value)}
+            className="search-input"
+          />
+		  <button className="search-icon" onClick={handleSearch}><SearchIcon /></button>
+        </div>
+
+        {/* Search Results */}
+        <div className="search-results">
+          {songs.length === 0 ? (
+            <p>No search results</p>
+          ) : (
+            <List>
+              {songs.map((result,index) => (
+                <ListItem key={index} className="result-item">
+                  <ListItemText primary={result.search_term} />
+                  <ListItemText primary={result.labels[0]} className="artist-name" />
+				  <button className="add-button" onClick={() => queueSong(result)}><AddIcon /></button>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </div>
+      </Box>
+    </Modal>
   );
+//  return (
+//    <div>
+//      <h1>Search Page</h1>
+//      <div>
+//        <label htmlFor="songName">Song Name:</label>
+//        <input
+//          type="text"
+//          id="songName"
+//          value={songName}
+//          onChange={(e) => setSongName(e.target.value)}
+//        />
+//        <button onClick={handleSearch}>Search</button>
+//      </div>
+//      <div>
+//        <h2>Search Results:</h2>
+//        <ul>
+//          {songs.map((result, index) => (
+//            <li key={index}>
+//              {result.search_term} - {result.labels.join(', ')}
+//              <button onClick={() => queueSong(result)}>Queue Song</button>
+//            </li>
+//          ))}
+//        </ul>
+//      </div>
+//    </div>
+//  );
 };
 
 export default SearchPage;

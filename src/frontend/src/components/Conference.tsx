@@ -7,27 +7,54 @@ import { useAudioContext } from './context/audio';
 import { useMediaStreamManager } from './context/mediastream';
 import WebSocketTransport from './transport';
 import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
+import axios from 'axios';
+import {aws4Interceptor} from 'aws4-axios';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import TextField from '@mui/material/TextField';
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface ConferenceProps {
   roomId: string;
 }
 
+interface Song {
+  url: string;
+  search_term: string;
+  labels: string[];
+}
+
+const client = axios.create();
+
+const interceptor = aws4Interceptor({
+  options: {
+    region: "us-east-1",
+	service: "execute-api",
+  }
+});
+
+client.interceptors.request.use(interceptor);
+
 const Conference = ({ roomId }: ConferenceProps) => {
     const audioContext = useAudioContext();
     const mediaStreamManager = useMediaStreamManager();
-	const [open, setOpen] = useState(false);
 	const [user, setUser] = useState<User>();
-	const handleOpen = () => setOpen(true);
-	const handleClose = () => setOpen(false);
 	const [showConference, setShowConference] = useState<boolean>(false);
 
 	const store = useStore();
     const { state, update } = store;
+
+	// For searching and queueing songs
+	const [songName, setSongName] = useState('');
+	const [songs, setSongs] = useState<Song[]>([]);
+	const [open, setOpen] = useState(false);
+	const handleOpen = () => setOpen(true);
+	const handleClose = () => setOpen(false);
 
     const refAudioEl = useRef<HTMLAudioElement | null>(null);
 
@@ -199,6 +226,47 @@ const Conference = ({ roomId }: ConferenceProps) => {
             );
         }
 
+		//For searching and queueing songs
+		const handleSearch = async () => {
+			try {
+			const response = await axios.get(
+				`https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/GET/?song=${songName}`
+			);
+			console.log(response);
+
+			setSongs(response.data.results);
+			}
+			catch (error) {
+				console.error('Error fetching data:', error);
+			}
+		};
+
+		const queueSong = async (result: Song) => {
+			try {
+			const url = 'https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/POST/final-music';
+
+			const requestBody = {
+				song: result.search_term,
+				room: '123',
+			};
+
+			const base64RequestBody = Buffer.from(JSON.stringify(requestBody)).toString('base64');
+
+			const response = await axios({
+				method: 'POST',
+				url: url,
+				data: base64RequestBody,
+				headers: {
+					'Content-Type': 'text/plain'
+				}
+			})
+
+			console.log('Song queued successfully:', response.data);
+			} catch (error) {
+			console.error('Error queuing song:', error);
+			}
+		};
+
         return (
             <div className={css.wrapper}>
                 <div className={css.top}>{renderUsers()}</div>
@@ -248,14 +316,49 @@ const Conference = ({ roomId }: ConferenceProps) => {
 							<MusicNoteIcon style={{ color: 'white'}} />
 						</button>
 					</AppBar>
+
 					<Modal
-						open={open}
-						onClose={handleClose}
-						aria-labelledby="modal-modal-title"
-						aria-describedby="modal-modal-description"
+					open={open}
+					onClose={handleClose}
+					aria-labelledby="modal-modal-title"
+					aria-describedby="modal-modal-description"
 					>
 						<Box className={css.roomModal}>
-						<div>Modal Content Here</div>
+							<div className={css.searchBar}>
+							<input
+								type="text"
+								id="songName"
+								value={songName}
+								onChange={(e) => setSongName(e.target.value)}
+								className={css.searchInput}
+							/>
+							{/*
+							<TextField
+								label="Search"
+								variant="outlined"
+								fullWidth
+								onChange={(e) => setSongName(e.target.value)}
+								className={css.searchInput}
+							/>
+							*/}
+							<button className={css.searchIcon} onClick={handleSearch}><SearchIcon /></button>
+							</div>
+
+							<div className={css.searchResults}>
+							{songs.length === 0 ? (
+								<p>No search results</p>
+							) : (
+								<List>
+								{songs.map((result,index) => (
+									<ListItem key={index} className={css.resultItems}>
+									<ListItemText primary={result.search_term} />
+									<ListItemText primary={result.labels[0]}/>
+									<button className={css.addButton} onClick={() => queueSong(result)}><AddIcon /></button>
+									</ListItem>
+								))}
+								</List>
+							)}
+							</div>
 						</Box>
 					</Modal>
                 </div>

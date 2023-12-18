@@ -109,3 +109,36 @@
 	justify-content: center;
 	padding: 1.5em;
 }
+
+.searchBar {
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
+.searchInput {
+	border-radius: 5em;
+	width: 100%;
+}
+
+.searchIcon {
+	margin-left: -40px;
+}
+
+.searchResults {
+	margin-top: 20px;
+	width: 100%;
+}
+
+.resultItems {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px;
+	border-bottom: 1px solid #ccc;
+	width: 100%;
+}
+
+.addButton {
+	margin-left: 10px;
+}
