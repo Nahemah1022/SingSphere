@@ -134,25 +134,50 @@
 	border: none;
 	outline: none;
 	box-shadow: none;
-	border-radius: 5em;
+	border-radius: 6em;
 	font-size: 1.5em;
+	padding-left: 0.2em;
+	padding-right: 0.2em;
+	padding-top: 0.1em;
+	padding-bottom: 0.1em;
+}
+.searchIcon:hover {
+	background-color: #dd1a89;
 }
 
 .searchResults {
 	margin-top: 20px;
 	width: 100%;
-	flex-grow: 2;
+	flex-grow: 3;
 }
 
 .resultItems {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
+	margin: auto;
 	padding: 10px;
-	border-bottom: 1px solid #ccc;
+	border-bottom: 1px solid white;
 	width: 100%;
 }
 
 .addButton {
 	margin-left: 10px;
+	background-color: #FFB951;
+	color: white;
+	outline: none;
+	border: none;
+	box-shadow: none;
+	width: 7em;
+	border-radius: 5em;
+}
+
+.searchMsg {
+	width: 100%;
+	text-align: center;
+	padding: 0;
+	margin: 0;
+}
+
+.artist {
+	display: flex;
+	justify-content: flex-end;
+	margin-right: 1em;
 }

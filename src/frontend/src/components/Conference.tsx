@@ -15,7 +15,7 @@ import {aws4Interceptor} from 'aws4-axios';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import TextField from '@mui/material/TextField';
+import Paper from '@mui/material/Paper';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -55,7 +55,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const { state, update } = store;
 
 	// For searching and queueing songs
-	const [songName, setSongName] = useState('');
+	const [searchTerm, setSearchTerm] = useState('');
 	const [songs, setSongs] = useState<Song[]>([]);
 	const [open, setOpen] = useState(false);
 	const handleOpen = () => setOpen(true);
@@ -232,10 +232,11 @@ const Conference = ({ roomId }: ConferenceProps) => {
         }
 
 		//For searching and queueing songs
+		//Sent GET request to retrieve songs
 		const handleSearch = async () => {
 			try {
 			const response = await axios.get(
-				`https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/GET/?song=${songName}`
+				`https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/GET/?song=${searchTerm}`
 			);
 			console.log(response);
 
@@ -246,6 +247,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
 			}
 		};
 
+		// Queue song by sending POST request to lambda function
 		const queueSong = async (result: Song) => {
 			try {
 			const url = 'https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/POST/final-music';
@@ -265,6 +267,14 @@ const Conference = ({ roomId }: ConferenceProps) => {
 			console.error('Error queuing song:', error);
 			}
 		};
+
+		// For formatting the result list by removing '_', capitalizing, and removing '.mp3'
+		const capitalizeAndFormat = (str: string): string => (
+			str
+				.replace(/_/g, ' ')
+				.replace(/\.mp3$/, '')
+				.replace(/\b\w/g, (match) => match.toUpperCase())
+		);
 
         return (
             <div className={css.wrapper}>
@@ -326,9 +336,9 @@ const Conference = ({ roomId }: ConferenceProps) => {
 							<div className={css.searchBar}>
 								<input
 									type="text"
-									id="songName"
-									value={songName}
-									onChange={(e) => setSongName(e.target.value)}
+									id="searchTerm"
+									value={searchTerm}
+									onChange={(e) => setSearchTerm(e.target.value)}
 									className={css.searchInput}
 								/>
 								<button className={css.searchIcon} onClick={handleSearch}><SearchIcon /></button>
@@ -336,17 +346,26 @@ const Conference = ({ roomId }: ConferenceProps) => {
 
 							<div className={css.searchResults}>
 								{songs.length === 0 ? (
-									<p>No search results</p>
+									<p className={css.searchMsg}>No search results</p>
 								) : (
-									<List>
-									{songs.map((result,index) => (
-										<ListItem key={index} className={css.resultItems}>
-										<ListItemText primary={result.search_term} />
-										<ListItemText primary={result.labels[0]} />
-										<button className={css.addButton} onClick={() => queueSong(result)}><AddIcon /></button>
-										</ListItem>
-									))}
-									</List>
+									<div>
+										<p className={css.searchMsg}>
+											{songs.length === 1
+											? `${songs.length} song was found`
+											: `${songs.length} songs were found`}
+										</p>
+										<Paper className="scroll" style = {{backgroundColor: 'transparent', color: 'white', boxShadow: 'none'}}>
+											<List>
+												{songs.map((result,index) => (
+													<ListItem key={index} className={css.resultItems}>
+													<ListItemText primary={capitalizeAndFormat(result.search_term)} />
+													<ListItemText primary={capitalizeAndFormat(result.labels[0])} className={css.artist} />
+													<button className={css.addButton} onClick={() => queueSong(result)}><AddIcon /></button>
+													</ListItem>
+												))}
+											</List>
+										</Paper>
+									</div>
 								)}
 							</div>
 						</Box>
