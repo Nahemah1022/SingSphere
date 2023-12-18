@@ -45,7 +45,7 @@ func (u *User) WriteRTP(pkt *rtp.Packet) error {
 	u.outTracksLock.RUnlock()
 
 	if track == nil {
-		log.Printf("WebRTCTransport.WriteRTP track==nil pkt.SSRC=%d", pkt.SSRC)
+		// log.Printf("WebRTCTransport.WriteRTP track==nil pkt.SSRC=%d", pkt.SSRC)
 		return errInvalidTrack
 	}
 

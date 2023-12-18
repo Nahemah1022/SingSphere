@@ -386,7 +386,7 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("track has started, of type %d: %s, ssrc: %d \n", remoteTrack.PayloadType(), remoteTrack.Codec().Name, remoteTrack.SSRC()),
 		)
 		if _, alreadyAdded := user.inTracks[remoteTrack.SSRC()]; alreadyAdded {
-			user.log("user.inTrack != nil", "already handled")
+			// user.log("user.inTrack != nil", "already handled")
 			return
 		}
 
