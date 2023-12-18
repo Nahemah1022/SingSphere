@@ -72,7 +72,7 @@ func NewRoom(name string) *Room {
 	audioTrack, addTrackErr := webrtc.NewTrack(
 		webrtc.DefaultPayloadTypeOpus,
 		rand.Uint32(),
-		"audio",
+		"stereo_audio",
 		"pion",
 		webrtc.NewRTPOpusCodec(webrtc.DefaultPayloadTypeOpus, 48000),
 	)
