@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useRef, useState, useEffect } from "react";
 import css from "./VoiceChat.module.css";
+import bggif from "../assets/bggif.gif"
 import { UsersRemoteList, EmptyRoom, ButtonMicrohone, ButtonSpeaker} from "./Components";
 import { useStore, User } from "../api/api";
 import { useAudioContext } from './context/audio';
@@ -306,10 +307,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
 				<ToastContainer />
                 <div className={css.userContainer}>{renderUsers()}</div>
                 <div className={css.displayContainer}>
-					<video width="100%" height="100%" autoPlay loop muted>
-						<source src="../assets/background.mp4" type="video/mp4" />
-						Your browser does not support the video tag.
-					</video>
+					<img src={bggif} width="100%" height="100%" />
 					<AppBar style={{
 						height: '4em',
 						backgroundColor: '#1F2937',

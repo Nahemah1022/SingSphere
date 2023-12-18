@@ -149,8 +149,8 @@ export const EmptyRoom = () => {
       >
         <span role="img" aria-labelledby="eyes">👀</span>
       </div>
-      <div style={{ textAlign: "center", fontSize: 16, color: "white" }}>
-        Empty Room
+      <div style={{ textAlign: "center", fontSize: 16, color: "white", width: '5em' }}>
+        Empty <br /> Room
       </div>
     </div>
   );
@@ -187,7 +187,7 @@ export const UsersRemoteList: React.FC<{
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-		flexDirection: 'column'
+		flexDirection: 'column',
       }}
     >
       {renderUsers()}
