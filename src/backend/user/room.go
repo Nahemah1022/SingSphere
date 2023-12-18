@@ -1,7 +1,14 @@
-package main
+package user
 
 import (
+	"context"
 	"errors"
+	"log"
+	"math/rand"
+
+	"github.com/Nahemah1022/singsphere-backend/playlist"
+	"github.com/Nahemah1022/singsphere-backend/stereo"
+	"github.com/pion/webrtc/v2"
 )
 
 type broadcastMsg struct {
@@ -12,11 +19,16 @@ type broadcastMsg struct {
 // Room maintains the set of active clients and broadcasts messages to the
 // clients.
 type Room struct {
-	Name      string
-	users     map[string]*User
-	broadcast chan broadcastMsg
-	join      chan *User // Register requests from the clients.
-	leave     chan *User // Unregister requests from clients.
+	Name            string
+	users           map[string]*User
+	broadcast       chan broadcastMsg
+	join            chan *User // Register requests from the clients.
+	leave           chan *User // Unregister requests from clients.
+	stereoTrack     *webrtc.Track
+	stereoPlaying   bool
+	requests        chan string       // Songs requested from users
+	transcodedSongs chan *stereo.Song // Songs transcoded into OPUS after user requests
+	playlist        *playlist.Playlist
 }
 
 // RoomWrap is a public representation of a room
@@ -48,12 +60,54 @@ func (r *Room) Wrap(me *User) *RoomWrap {
 
 // NewRoom creates new room
 func NewRoom(name string) *Room {
+	// mediaEngine := webrtc.MediaEngine{}
+	// mediaEngine.RegisterCodec(webrtc.NewRTPOpusCodec(webrtc.DefaultPayloadTypeOpus, 48000))
+	// iceConnectedCtx, iceConnectedCtxCancel := context.WithCancel(context.Background())
+
+	requests := make(chan string)
+
+	pl := playlist.New()
+	pl.Subscribe(name, requests)
+
+	audioTrack, addTrackErr := webrtc.NewTrack(
+		webrtc.DefaultPayloadTypeOpus,
+		rand.Uint32(),
+		"stereo_audio",
+		"pion",
+		webrtc.NewRTPOpusCodec(webrtc.DefaultPayloadTypeOpus, 48000),
+	)
+	if addTrackErr != nil {
+		panic(addTrackErr)
+	}
+
 	return &Room{
-		broadcast: make(chan broadcastMsg),
-		join:      make(chan *User),
-		leave:     make(chan *User),
-		users:     make(map[string]*User),
-		Name:      name,
+		broadcast:       make(chan broadcastMsg),
+		join:            make(chan *User),
+		leave:           make(chan *User),
+		users:           make(map[string]*User),
+		Name:            name,
+		stereoTrack:     audioTrack,
+		stereoPlaying:   false,
+		requests:        requests,
+		transcodedSongs: make(chan *stereo.Song),
+		playlist:        pl,
+	}
+}
+
+func (r *Room) StereoPlay() {
+	// ensure this goroutine invoked only once when the first user comes in
+	if r.stereoPlaying {
+		return
+	}
+	r.stereoPlaying = true
+
+	log.Println("Stereo Start Playing")
+	for song := range r.transcodedSongs {
+		log.Printf("Playing Song: %s\n", song.Name)
+		r.BroadcastSong("next_song", song)
+		ctx, ctxCancel := context.WithCancel(context.Background())
+		stereo.Play(song.Path, r.stereoTrack, ctxCancel)
+		<-ctx.Done()
 	}
 }
 
@@ -99,6 +153,15 @@ func (r *Room) GetUsersCount() int {
 	return len(r.GetUsers())
 }
 
+// Broadcast enqueue/nextsong event to room's users
+func (r *Room) BroadcastSong(operation string, song *stereo.Song) {
+	for _, u := range r.users {
+		if err := u.SendEvent(Event{Type: operation, Song: song}); err != nil {
+			panic(err)
+		}
+	}
+}
+
 func (r *Room) run() {
 	for {
 		select {
@@ -124,6 +187,18 @@ func (r *Room) run() {
 					delete(r.users, user.ID)
 				}
 			}
+		case encoded := <-r.requests:
+			// the transcoded songs won't be played immediately, but we still need
+			// an immediate notification from transcoder about whether the song is
+			// successfully enqueued (might fail to transcode or doesn't exist)
+			// therefore, here we use this additional channel to receive the notification
+			successCh := make(chan *stereo.Song)
+			go stereo.Trans(encoded, r.transcodedSongs, successCh)
+			song := <-successCh
+			if song != nil {
+				r.BroadcastSong("enqueue", song)
+			}
+			close(successCh)
 		}
 	}
 }
@@ -133,14 +208,14 @@ type Rooms struct {
 	rooms map[string]*Room
 }
 
-var errNotFound = errors.New("not found")
+var ErrNotFound = errors.New("not found")
 
 // Get room by room id
 func (r *Rooms) Get(roomID string) (*Room, error) {
 	if room, exists := r.rooms[roomID]; exists {
 		return room, nil
 	}
-	return nil, errNotFound
+	return nil, ErrNotFound
 }
 
 // GetOrCreate creates room if it does not exist

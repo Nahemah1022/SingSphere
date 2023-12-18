@@ -1,11 +1,9 @@
-package main
+package user
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -21,11 +19,20 @@ import (
 
 var (
 	// only support unified plan
-	cfg = webrtc.Configuration{
-		SDPSemantics: webrtc.SDPSemanticsUnifiedPlanWithFallback,
+	// cfg = webrtc.Configuration{
+	// 	SDPSemantics: webrtc.SDPSemanticsUnifiedPlanWithFallback,
+	// }
+
+	// prepare the configuration
+	peerConnectionConfig = webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{
+			{
+				URLs: []string{"stun:stun.l.google.com:19302"},
+			},
+		},
 	}
 
-	setting webrtc.SettingEngine
+	// setting webrtc.SettingEngine
 
 	errChanClosed    = errors.New("channel closed")
 	errInvalidTrack  = errors.New("track is nil")
@@ -70,6 +77,7 @@ type User struct {
 	inTracksLock  sync.RWMutex
 	outTracks     map[uint32]*webrtc.Track // Rest of the room's tracks
 	outTracksLock sync.RWMutex
+	stereoTreck   *webrtc.Track
 
 	rtpCh chan *rtp.Packet
 
@@ -98,143 +106,6 @@ func (u *User) Wrap() *UserWrap {
 	}
 }
 
-// readPump pumps messages from the websocket connection to the hub.
-func (u *User) readPump() {
-	defer func() {
-		u.stop = true
-		// u.pc.Close()
-		u.room.Leave(u)
-		u.conn.Close()
-	}()
-	u.conn.SetReadLimit(maxMessageSize)
-	u.conn.SetReadDeadline(time.Now().Add(pongWait))
-	u.conn.SetPongHandler(func(string) error { u.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	for {
-		_, message, err := u.conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-				log.Println(err)
-			}
-			break
-		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		go func() {
-			err := u.HandleEvent(message)
-			if err != nil {
-				log.Println(err)
-				u.SendErr(err)
-			}
-		}()
-	}
-}
-
-// writePump pumps messages from the hub to the websocket connection.
-//
-// A goroutine running writePump is started for each connection. The
-// application ensures that there is at most one writer to a connection by
-// executing all writes from this goroutine.
-func (u *User) writePump() {
-	ticker := time.NewTicker(pingPeriod)
-	defer func() {
-		ticker.Stop()
-		u.stop = true
-		u.conn.Close()
-	}()
-	for {
-		select {
-		case message, ok := <-u.send:
-			u.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if !ok {
-				// The hub closed the channel.
-				u.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
-			w, err := u.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
-			w.Write(message)
-			if err := w.Close(); err != nil {
-				return
-			}
-		case <-ticker.C:
-			u.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := u.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
-		}
-	}
-}
-
-// Event represents web socket user event
-type Event struct {
-	Type string `json:"type"`
-
-	Offer     *webrtc.SessionDescription `json:"offer,omitempty"`
-	Answer    *webrtc.SessionDescription `json:"answer,omitempty"`
-	Candidate *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
-	User      *UserWrap                  `json:"user,omitempty"`
-	Room      *RoomWrap                  `json:"room,omitempty"`
-	Desc      string                     `json:"desc,omitempty"`
-}
-
-// SendEvent sends json body to web socket
-func (u *User) SendEvent(event Event) error {
-	json, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-	u.send <- json
-	return nil
-}
-
-// SendEventUser sends user to client to identify himself
-func (u *User) SendEventUser() error {
-	return u.SendEvent(Event{Type: "user", User: u.Wrap()})
-}
-
-// SendEventRoom sends room to client with users except me
-func (u *User) SendEventRoom() error {
-	return u.SendEvent(Event{Type: "room", Room: u.room.Wrap(u)})
-}
-
-// BroadcastEvent sends json body to everyone in the room except this user
-func (u *User) BroadcastEvent(event Event) error {
-	json, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-	u.room.Broadcast(json, u)
-	return nil
-}
-
-// BroadcastEventJoin sends user_join event
-func (u *User) BroadcastEventJoin() error {
-	return u.BroadcastEvent(Event{Type: "user_join", User: u.Wrap()})
-}
-
-// BroadcastEventLeave sends user_leave event
-func (u *User) BroadcastEventLeave() error {
-	return u.BroadcastEvent(Event{Type: "user_leave", User: u.Wrap()})
-}
-
-// BroadcastEventMute sends microphone mute event to everyone
-func (u *User) BroadcastEventMute() error {
-	return u.BroadcastEvent(Event{Type: "mute", User: u.Wrap()})
-}
-
-// BroadcastEventUnmute sends microphone unmute event to everyone
-func (u *User) BroadcastEventUnmute() error {
-	return u.BroadcastEvent(Event{Type: "unmute", User: u.Wrap()})
-}
-
-// SendErr sends error in json format to web socket
-func (u *User) SendErr(err error) error {
-	return u.SendEvent(Event{Type: "error", Desc: fmt.Sprint(err)})
-}
-
 func (u *User) log(msg ...interface{}) {
 	log.Println(
 		fmt.Sprintf("user %s:", u.ID),
@@ -249,7 +120,7 @@ func (u *User) HandleEvent(eventRaw []byte) error {
 	if err != nil {
 		return err
 	}
-	u.log("handle event", event.Type)
+	u.log("handle event: ", event.Type)
 	if event.Type == "offer" {
 		if event.Offer == nil {
 			return u.SendErr(errors.New("empty offer"))
@@ -286,17 +157,6 @@ func (u *User) HandleEvent(eventRaw []byte) error {
 	return u.SendErr(errNotImplemented)
 }
 
-// GetRoomTracks returns list of room incoming tracks
-func (u *User) GetRoomTracks() []*webrtc.Track {
-	tracks := []*webrtc.Track{}
-	for _, user := range u.room.GetUsers() {
-		for _, track := range user.inTracks {
-			tracks = append(tracks, track)
-		}
-	}
-	return tracks
-}
-
 func (u *User) supportOpus(offer webrtc.SessionDescription) bool {
 	mediaEngine := webrtc.MediaEngine{}
 	mediaEngine.PopulateFromSDP(offer)
@@ -309,10 +169,7 @@ func (u *User) supportOpus(offer webrtc.SessionDescription) bool {
 			break
 		}
 	}
-	if payloadType == 0 {
-		return false
-	}
-	return true
+	return payloadType != 0
 }
 
 // HandleOffer handles webrtc offer
@@ -331,7 +188,6 @@ func (u *User) HandleOffer(offer webrtc.SessionDescription) error {
 		}
 	}
 
-	time.Sleep(3000 * time.Millisecond)
 	// Set the remote SessionDescription
 	if err := u.pc.SetRemoteDescription(offer); err != nil {
 		return err
@@ -361,6 +217,9 @@ func (u *User) Offer() (webrtc.SessionDescription, error) {
 // SendOffer creates webrtc offer
 func (u *User) SendOffer() error {
 	offer, err := u.Offer()
+	if err != nil {
+		panic(err)
+	}
 	err = u.SendEvent(Event{Type: "offer", Offer: &offer})
 	if err != nil {
 		panic(err)
@@ -401,104 +260,9 @@ func (u *User) SendAnswer() error {
 		return err
 	}
 	err = u.SendEvent(Event{Type: "answer", Answer: &answer})
-	return nil
-}
-
-// receiveInTrackRTP receive all incoming tracks' rtp and sent to one channel
-func (u *User) receiveInTrackRTP(remoteTrack *webrtc.Track) {
-	for {
-		if u.stop {
-			return
-		}
-		rtp, err := remoteTrack.ReadRTP()
-		if err != nil {
-			if err == io.EOF {
-				return
-			}
-			log.Fatalf("rtp err => %v", err)
-		}
-		u.rtpCh <- rtp
-	}
-}
-
-// ReadRTP read rtp packet
-func (u *User) ReadRTP() (*rtp.Packet, error) {
-	rtp, ok := <-u.rtpCh
-	if !ok {
-		return nil, errChanClosed
-	}
-	return rtp, nil
-}
-
-// WriteRTP send rtp packet to user outgoing tracks
-func (u *User) WriteRTP(pkt *rtp.Packet) error {
-	if pkt == nil {
-		return errInvalidPacket
-	}
-	u.outTracksLock.RLock()
-	track := u.outTracks[pkt.SSRC]
-	u.outTracksLock.RUnlock()
-
-	if track == nil {
-		log.Printf("WebRTCTransport.WriteRTP track==nil pkt.SSRC=%d", pkt.SSRC)
-		return errInvalidTrack
-	}
-
-	// log.Debugf("WebRTCTransport.WriteRTP pkt=%v", pkt)
-	err := track.WriteRTP(pkt)
 	if err != nil {
-		// log.Errorf(err.Error())
-		// u.writeErrCnt++
-		return err
+		panic(err)
 	}
-	return nil
-}
-
-func (u *User) broadcastIncomingRTP() {
-	for {
-		rtp, err := u.ReadRTP()
-		if err != nil {
-			panic(err)
-		}
-		for _, user := range u.room.GetOtherUsers(u) {
-			err := user.WriteRTP(rtp)
-			if err != nil {
-				// panic(err)
-				fmt.Println(err)
-			}
-		}
-	}
-}
-
-// GetInTracks return incoming tracks
-func (u *User) GetInTracks() map[uint32]*webrtc.Track {
-	u.inTracksLock.RLock()
-	defer u.inTracksLock.RUnlock()
-	return u.inTracks
-
-}
-
-// GetOutTracks return outgoing tracks
-func (u *User) GetOutTracks() map[uint32]*webrtc.Track {
-	u.outTracksLock.RLock()
-	defer u.outTracksLock.RUnlock()
-	return u.outTracks
-}
-
-// AddTrack adds track to peer connection
-func (u *User) AddTrack(ssrc uint32) error {
-	track, err := u.pc.NewTrack(webrtc.DefaultPayloadTypeOpus, ssrc, string(ssrc), string(ssrc))
-	if err != nil {
-		return err
-	}
-	if _, err := u.pc.AddTrack(track); err != nil {
-		log.Println("ERROR Add remote track as peerConnection local track", err)
-		return err
-	}
-
-	u.outTracksLock.Lock()
-	u.outTracks[track.SSRC()] = track
-	u.outTracksLock.Unlock()
 	return nil
 }
 
@@ -511,11 +275,12 @@ func (u *User) Watch() {
 			return
 		}
 		fmt.Println("ID:", u.ID, "out: ", u.GetOutTracks())
+		fmt.Println("ID:", u.ID, "in: ", u.GetInTracks())
 	}
 }
 
 // serveWs handles websocket requests from the peer.
-func serveWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
+func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
@@ -571,16 +336,24 @@ func serveWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 			fmt.Println("attach ", len(tracks), "tracks to new user")
 			user.log("new user add tracks", len(tracks))
 			for _, track := range tracks {
-				err := user.AddTrack(track.SSRC())
-				if err != nil {
+				if err := user.AddTrack(track.SSRC()); err != nil {
 					log.Println("ERROR Add remote track as peerConnection local track", err)
 					panic(err)
 				}
 			}
+
+			if _, err := user.pc.AddTrack(user.room.stereoTrack); err != nil {
+				// if err := user.AddStereoTrack(); err != nil {
+				log.Println("ERROR Add stereo track as peerConnection local track", err)
+				panic(err)
+			}
+
 			err = user.SendOffer()
 			if err != nil {
 				panic(err)
 			}
+			go user.room.StereoPlay()
+			// user.room.requests <- "peach.mp3"
 		} else if connectionState == webrtc.ICEConnectionStateDisconnected ||
 			connectionState == webrtc.ICEConnectionStateFailed ||
 			connectionState == webrtc.ICEConnectionStateClosed {
@@ -613,7 +386,7 @@ func serveWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("track has started, of type %d: %s, ssrc: %d \n", remoteTrack.PayloadType(), remoteTrack.Codec().Name, remoteTrack.SSRC()),
 		)
 		if _, alreadyAdded := user.inTracks[remoteTrack.SSRC()]; alreadyAdded {
-			user.log("user.inTrack != nil", "already handled")
+			// user.log("user.inTrack != nil", "already handled")
 			return
 		}
 
@@ -633,13 +406,19 @@ func serveWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 		go user.broadcastIncomingRTP()
 	})
 
+	// user.conn.SetCloseHandler(func(code int, text string) error {
+	// 	log.Printf("WS connection closed, %s\n", text)
+	// 	err := user.pc.Close()
+	// 	return err
+	// })
+
 	user.room.Join(user)
 
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
 	go user.writePump()
 	go user.readPump()
-	go user.Watch()
+	// go user.Watch()
 
 	user.SendEventUser()
 	user.SendEventRoom()

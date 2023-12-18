@@ -4,6 +4,7 @@ import { useContext } from "react";
 export interface TransportEvent {
     type:
         | "offer"
+        | "offer_stereo"
         | "answer"
         | "candidate"
         | "error"
