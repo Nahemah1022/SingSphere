@@ -1,13 +1,10 @@
 import * as React from "react";
 import { useRef, useState, useEffect } from "react";
 import css from "./VoiceChat.module.css";
-import vid from '../assets/background.mp4';
-
 import { UsersRemoteList, EmptyRoom, ButtonMicrohone, ButtonSpeaker} from "./Components";
 import { useStore, User } from "../api/api";
 import { useAudioContext } from './context/audio';
 import { useMediaStreamManager } from './context/mediastream';
-
 import WebSocketTransport from './transport';
 import AppBar from '@mui/material/AppBar';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
@@ -18,9 +15,9 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
-import ImageList from '@mui/material/ImageList';
 import AddIcon from '@mui/icons-material/Add';
 import InputRange from 'react-input-range';
+import { ColorRing } from 'react-loader-spinner';
 
 interface ConferenceProps {
   roomId: string;
@@ -46,6 +43,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [songs, setSongs] = useState<Song[]>([]);
 	const [open, setOpen] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
 
@@ -244,12 +242,14 @@ const Conference = ({ roomId }: ConferenceProps) => {
 					formattedTerm = searchTerm;
 				}
 
+                setIsSearching(true);
 				const response = await axios.get(`https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/GET/?song=${formattedTerm}`);
 				console.log(response);
+                setIsSearching(false);
 				setSongs(response.data.results);
-			}
-			catch (error) {
+			} catch (error) {
 				setSongs([]);
+                setIsSearching(false);
 				console.error('Error fetching data:', error);
 			}
 		};
@@ -288,7 +288,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
                 <div className={css.userContainer}>{renderUsers()}</div>
                 <div className={css.displayContainer}>
 					<video width="100%" height="100%" controls autoPlay>
-						<source src={vid} type="video/mp4" />
+						<source src="../assets/background.mp4" type="video/mp4" />
 						Your browser does not support the video tag.
 					</video>
 					<AppBar style={{
@@ -386,7 +386,15 @@ const Conference = ({ roomId }: ConferenceProps) => {
 								<button className={css.searchSong} onClick={() => handleSearch("song")}>Search Song</button>
 								<button className={css.searchCategory} onClick={() => handleSearch("category")}>Search Category</button>
 							</div>
-
+                            <ColorRing
+                                visible={isSearching}
+                                height="80"
+                                width="80"
+                                ariaLabel="blocks-loading"
+                                wrapperStyle={{}}
+                                wrapperClass="blocks-wrapper"
+                                colors={['#e15b64', '#f47e60', '#f8b26a', '#abbd81', '#849b87']}
+                                />
 							<div className={css.searchResults}>
 								{songs.length === 0 ? (
 									<p className={css.searchMsg}>No search results</p>
