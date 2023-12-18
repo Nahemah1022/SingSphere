@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import css from "./VoiceChat.module.css";
 import { User } from "../api/api";
 import AudioContextProvider, { useAudioContext } from "./context/audio";
+import InputRange from 'react-input-range';
+import "react-input-range/lib/css/index.css"
 
 export const Storybook: React.FC = () => {
   return (
@@ -15,6 +17,8 @@ export const Storybook: React.FC = () => {
         <div style={{ width: 400 }}>
           <h3>user me</h3>
           <UserMe
+            volume={5}
+            setVolume={console.log}
             user={{
               emoji: "😎",
               id: "123",
@@ -191,12 +195,16 @@ export const UsersRemoteList: React.FC<{
 };
 
 export const UserMe: React.FC<{
+  volume: number;
+  setVolume: React.Dispatch<React.SetStateAction<number>>;
   user: User;
   isMutedMicrophone: boolean;
   isMutedSpeaker: boolean;
   onClickMuteMicrohone: (event: React.MouseEvent) => void;
   onClickMuteSpeaker: (event: React.MouseEvent) => void;
 }> = ({
+  volume,
+  setVolume,
   user,
   isMutedMicrophone,
   isMutedSpeaker,
@@ -229,6 +237,18 @@ export const UserMe: React.FC<{
           }}
         />
       </div>
+      <InputRange
+        maxValue={10}
+        minValue={0}
+        value={volume}
+        onChange={(value) => {
+          setVolume(value as any)
+          let stereoAudio = document.querySelectorAll(".stereo_audio") as NodeListOf<HTMLAudioElement>;
+          if (stereoAudio.length !== 0) {
+            stereoAudio[0].volume = value as any / 10;
+          }
+          console.log(value)
+        }} />
     </div>
   );
 };

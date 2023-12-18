@@ -50,6 +50,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const mediaStreamManager = useMediaStreamManager();
 	const [user, setUser] = useState<User>();
 	const [showConference, setShowConference] = useState<boolean>(false);
+    const [volume, setVolume] = useState<number>(5);
 
 	const store = useStore();
     const { state, update } = store;
@@ -80,10 +81,14 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const subscribe = async () => {
         peerConnection.ontrack = async (event: RTCTrackEvent) => {
             console.log(`peerConnection::ontrack ${event.track.kind}`);
-            console.log(event.streams);
+            console.log(event);
             const stream = event.streams[0];
             try {
                 const audio = document.createElement("audio");
+                if (event.track.label === "stereo_audio") {
+                    audio.volume = volume / 10;
+                    audio.classList.add("stereo_audio");
+                }
                 audio.srcObject = stream;
                 audio.autoplay = true;
                 audio.play();
@@ -162,13 +167,16 @@ const Conference = ({ roomId }: ConferenceProps) => {
                     throw new Error("no user");
                 }
                 store.api.roomUserUpdate(event.user);
+            } else if (event.type === "enqueue") {
+                alert("enqueued");
+                console.log(event.song);
+            } else if (event.type === "next_song") {
+                alert("next_song");
+                console.log(event.song);
             } else {
                 throw new Error(`type ${event.type} not implemented`);
             }
         });
-        return () => {
-
-        }
     }, [store, peerConnection, transport]);
 
     const renderUsers = () => {
@@ -294,6 +302,8 @@ const Conference = ({ roomId }: ConferenceProps) => {
                 <div className={css.bottom}>
                     {user && (
                         <UserMe
+                            volume={volume}
+                            setVolume={setVolume}
                             user={user}
                             isMutedMicrophone={state.isMutedMicrophone}
                             isMutedSpeaker={state.isMutedSpeaker}

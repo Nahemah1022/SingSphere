@@ -10,7 +10,7 @@ phases:
       - echo Installing source NPM dependencies...
       - cd ./src/frontend
       - npm install -g npm@8.1.0
-      - npm install
+      - npm install --force
       - npm i react-scripts@4.0.3
   build:
     commands:
@@ -19,6 +19,7 @@ phases:
       - mv ./build/* ../../
       - cd ../../
       - rm -Rf src docs README*
+      # - aws cloudfront create-invalidation --distribution-id E1DA1UH6E82GH9 --paths /*
 artifacts:
   files:
     - "**/*"
