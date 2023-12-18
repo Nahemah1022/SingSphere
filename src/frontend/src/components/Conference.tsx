@@ -6,6 +6,12 @@ import { useStore, User } from "../api/api";
 import { useAudioContext } from './context/audio';
 import { useMediaStreamManager } from './context/mediastream';
 import WebSocketTransport from './transport';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
 
 interface ConferenceProps {
   roomId: string;
@@ -14,12 +20,17 @@ interface ConferenceProps {
 const Conference = ({ roomId }: ConferenceProps) => {
     const audioContext = useAudioContext();
     const mediaStreamManager = useMediaStreamManager();
+	const [open, setOpen] = useState(false);
+	const [user, setUser] = useState<User>();
+	const handleOpen = () => setOpen(true);
+	const handleClose = () => setOpen(false);
+	const [showConference, setShowConference] = useState<boolean>(false);
 
-    const refAudioEl = useRef<HTMLAudioElement | null>(null);
-    const store = useStore();
+	const store = useStore();
     const { state, update } = store;
 
-    const [user, setUser] = useState<User>();
+    const refAudioEl = useRef<HTMLAudioElement | null>(null);
+
     const refTransport = useRef<WebSocketTransport>();
 	const WS_URL = `wss://sinsphere-api.nahemah.com/${roomId}`;
     console.log(WS_URL)
@@ -135,8 +146,6 @@ const Conference = ({ roomId }: ConferenceProps) => {
         return <UsersRemoteList users={store.state.room.users} />;
     };
 
-    const [showConference, setShowConference] = useState<boolean>(false);
-
     const renderContent = () => {
         if (!showConference) {
             return (
@@ -222,10 +231,38 @@ const Conference = ({ roomId }: ConferenceProps) => {
                             }}
                         />
                     )}
+					<AppBar style={{
+						height: '4em',
+						backgroundColor: '#1F2937',
+						boxShadow: 'none',
+						outline: 'none',
+						border: 'none',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						top: 'auto',
+						bottom: '0',
+						flexGrow: '1'
+					}}>
+						<button className={css.addSong} onClick={handleOpen}>
+							<MusicNoteIcon style={{ color: 'white'}} />
+						</button>
+					</AppBar>
+					<Modal
+						open={open}
+						onClose={handleClose}
+						aria-labelledby="modal-modal-title"
+						aria-describedby="modal-modal-description"
+					>
+						<Box className={css.roomModal}>
+						<div>Modal Content Here</div>
+						</Box>
+					</Modal>
                 </div>
             </div>
         );
     };
+
     return (
         <div style={{ width: "100%" }}>
         <audio ref={refAudioEl} />
