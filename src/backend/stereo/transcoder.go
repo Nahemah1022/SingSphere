@@ -85,11 +85,10 @@ func getMP3Length(file string) (uint, error) {
 
 	for {
 		if err := d.Decode(&f, &skipped); err != nil {
-			if err == io.EOF {
+			if err != nil {
+				log.Println(err)
 				break
 			}
-			fmt.Println(err)
-			return 0, err
 		}
 
 		t = t + f.Duration().Seconds()
