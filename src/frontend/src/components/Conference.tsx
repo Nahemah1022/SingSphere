@@ -32,11 +32,15 @@ interface Song {
 const client = axios.create();
 
 const interceptor = aws4Interceptor({
-  options: {
-    region: "us-east-1",
-	service: "execute-api",
-	assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine"
-  }
+	options: {
+		region: "us-east-1",
+		service: "execute-api",
+		assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine"
+	},
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ""
+	}
 });
 
 client.interceptors.request.use(interceptor);
