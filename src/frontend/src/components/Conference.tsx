@@ -35,6 +35,7 @@ const interceptor = aws4Interceptor({
   options: {
     region: "us-east-1",
 	service: "execute-api",
+	assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine"
   }
 });
 
@@ -247,12 +248,12 @@ const Conference = ({ roomId }: ConferenceProps) => {
 
 			const requestBody = {
 				song: result.search_term,
-				room: '123',
+				room: roomId,
 			};
 
 			const base64RequestBody = Buffer.from(JSON.stringify(requestBody)).toString('base64');
 
-			const response = await axios({
+			const response = await client({
 				method: 'POST',
 				url: url,
 				data: base64RequestBody,
