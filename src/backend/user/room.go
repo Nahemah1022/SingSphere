@@ -194,9 +194,11 @@ func (r *Room) run() {
 			// therefore, here we use this additional channel to receive the notification
 			successCh := make(chan *stereo.Song)
 			go stereo.Trans(encoded, r.transcodedSongs, successCh)
-			if song := <-successCh; song != nil {
+			song := <-successCh
+			if song != nil {
 				r.BroadcastSong("enqueue", song)
 			}
+			close(successCh)
 		}
 	}
 }
