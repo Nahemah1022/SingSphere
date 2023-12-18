@@ -406,6 +406,12 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 		go user.broadcastIncomingRTP()
 	})
 
+	user.conn.SetCloseHandler(func(code int, text string) error {
+		log.Printf("WS connection closed, %s\n", text)
+		err := user.pc.Close()
+		return err
+	})
+
 	user.room.Join(user)
 
 	// Allow collection of memory referenced by the caller by doing all work in
