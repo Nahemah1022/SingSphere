@@ -175,7 +175,7 @@ export const UsersRemoteList: React.FC<{
   const renderUsers = () => {
     return users.map((user) => {
       return (
-        <div style={{ margin: 5 }} key={user.id}>
+        <div style={{ margin: 5}} key={user.id}>
           <UserRemote user={user} />
         </div>
       );
@@ -187,6 +187,7 @@ export const UsersRemoteList: React.FC<{
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+		flexDirection: 'column'
       }}
     >
       {renderUsers()}

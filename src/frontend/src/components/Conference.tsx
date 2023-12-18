@@ -18,6 +18,8 @@ import Paper from '@mui/material/Paper';
 import AddIcon from '@mui/icons-material/Add';
 import InputRange from 'react-input-range';
 import { ColorRing } from 'react-loader-spinner';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface ConferenceProps {
   roomId: string;
@@ -44,8 +46,17 @@ const Conference = ({ roomId }: ConferenceProps) => {
 	const [songs, setSongs] = useState<Song[]>([]);
 	const [open, setOpen] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
+	const [alertContent, setAlertContent] = useState('');
 	const handleOpen = () => setOpen(true);
 	const handleClose = () => setOpen(false);
+
+	// For formatting the result list by removing '_', capitalizing, and removing '.mp3'
+	const capitalizeAndFormat = (str: string): string => (
+		str
+			.replace(/_/g, ' ')
+			.replace(/\.mp3$/, '')
+			.replace(/\b\w/g, (match) => match.toUpperCase())
+	);
 
     const refAudioEl = useRef<HTMLAudioElement | null>(null);
 
@@ -152,11 +163,26 @@ const Conference = ({ roomId }: ConferenceProps) => {
                     throw new Error("no user");
                 }
                 store.api.roomUserUpdate(event.user);
+			// Alert when a song is enqueued
             } else if (event.type === "enqueue") {
-                alert("enqueued");
+				const song = event?.song?.name ?? "";
+				if (song) {
+					toast(`Enqueued: ${capitalizeAndFormat(song)} 🎸`);
+				}
+
                 console.log(event.song);
+			// Alert when the next song is coming up
             } else if (event.type === "next_song") {
-                alert("next_song");
+				const song = event?.song?.name ?? "";
+				const duration = event?.song?.duration ?? "";
+				if (song) {
+					toast(`Next Up: ${capitalizeAndFormat(song)} 🎤`);
+				}
+
+				if (duration) {
+
+				}
+
                 console.log(event.song);
             } else {
                 throw new Error(`type ${event.type} not implemented`);
@@ -275,19 +301,12 @@ const Conference = ({ roomId }: ConferenceProps) => {
 			}
 		};
 
-		// For formatting the result list by removing '_', capitalizing, and removing '.mp3'
-		const capitalizeAndFormat = (str: string): string => (
-			str
-				.replace(/_/g, ' ')
-				.replace(/\.mp3$/, '')
-				.replace(/\b\w/g, (match) => match.toUpperCase())
-		);
-
         return (
             <div className={css.wrapper}>
+				<ToastContainer />
                 <div className={css.userContainer}>{renderUsers()}</div>
                 <div className={css.displayContainer}>
-					<video width="100%" height="100%" controls autoPlay>
+					<video width="100%" height="100%" autoPlay loop muted>
 						<source src="../assets/background.mp4" type="video/mp4" />
 						Your browser does not support the video tag.
 					</video>

@@ -104,6 +104,9 @@
 	border-radius: 0.5em;
 	cursor: pointer;
 }
+.addSong:hover {
+	background-color: #dd1a89;
+}
 
 .roomModal {
 	width: 50%;
@@ -193,6 +196,10 @@
 	box-shadow: none;
 	width: 7em;
 	border-radius: 5em;
+	cursor: pointer;
+}
+.addButton:hover {
+	background-color: #ffe9a1;
 }
 
 .searchMsg {
@@ -206,4 +213,14 @@
 	display: flex;
 	justify-content: flex-end;
 	margin-right: 1em;
+}
+
+.alert {
+	position: fixed;
+	top: 1em;
+	right: 1em;
+	z-index: 9999;
+	width: 30em;
+	background-color: #161c26 !important;
+	color: white !important;
 }
