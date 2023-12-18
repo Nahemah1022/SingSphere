@@ -81,11 +81,11 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const subscribe = async () => {
         peerConnection.ontrack = async (event: RTCTrackEvent) => {
             console.log(`peerConnection::ontrack ${event.track.kind}`);
-            console.log(event.streams);
+            console.log(event);
             const stream = event.streams[0];
             try {
                 const audio = document.createElement("audio");
-                if (event.track.label === "stereo") {
+                if (event.track.label === "stereo_audio") {
                     audio.volume = volume / 10;
                     audio.classList.add("stereo_audio");
                 }
