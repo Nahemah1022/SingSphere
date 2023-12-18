@@ -29,21 +29,21 @@ interface Song {
   labels: string[];
 }
 
-const client = axios.create();
+//const client = axios.create();
 
-const interceptor = aws4Interceptor({
-	options: {
-		region: "us-east-1",
-		service: "execute-api",
-		assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine"
-	},
-	credentials: {
-		accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
-		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ""
-	}
-});
+//const interceptor = aws4Interceptor({
+//	options: {
+//		region: "us-east-1",
+//		service: "execute-api",
+//		assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine"
+//	},
+//	credentials: {
+//		accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
+//		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ""
+//	}
+//});
 
-client.interceptors.request.use(interceptor);
+//client.interceptors.request.use(interceptor);
 
 const Conference = ({ roomId }: ConferenceProps) => {
     const audioContext = useAudioContext();
@@ -257,14 +257,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
 
 			const base64RequestBody = Buffer.from(JSON.stringify(requestBody)).toString('base64');
 
-			const response = await client({
-				method: 'POST',
-				url: url,
-				data: base64RequestBody,
-				headers: {
-					'Content-Type': 'text/plain'
-				}
-			})
+			const response = await axios.post(url, base64RequestBody, {headers: {'Content-Type': 'text/plain'}});
 
 			console.log('Song queued successfully:', response.data);
 			} catch (error) {
