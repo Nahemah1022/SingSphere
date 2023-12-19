@@ -1,6 +1,6 @@
 # SingSphere
 
-![System Architecture](docs/arch.png)
+<img width="1496" alt="Screenshot 2023-12-18 at 6 52 54 PM" src="https://github.com/Nahemah1022/SingSphere/assets/90917906/44ed765d-aab4-47fc-9914-f1cc241c544b">
 
 ## Overview
 
