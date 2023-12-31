@@ -38,7 +38,7 @@
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*",
     "lint:fix": "eslint --fix src/**/*",
-    "format": "prettier --write src/**/*.{tsx,ts} --config .prettierrc.json"
+    "format": "prettier --write src/**/* --config .prettierrc.json"
   },
   "browserslist": [
     ">0.2%",
