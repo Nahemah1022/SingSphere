@@ -14,6 +14,7 @@ require (
 	github.com/aws/aws-sdk-go v1.38.20 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/lucas-clemente/quic-go v0.7.1-0.20190401152353-907071221cf9 // indirect
 	github.com/marten-seemann/qtls v0.2.3 // indirect
 	github.com/pion/datachannel v1.4.16 // indirect

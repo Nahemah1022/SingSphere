@@ -67,7 +67,6 @@ func (u *User) AddStereoTrack() error {
 	if _, addTrackErr = u.pc.AddTrack(audioTrack); addTrackErr != nil {
 		panic(addTrackErr)
 	}
-	u.stereoTreck = audioTrack
 
 	go func() {
 		// Open a IVF file and start reading using our IVFReader

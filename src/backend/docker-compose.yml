@@ -8,7 +8,7 @@ services:
     user: root
     environment:
       - GO_ENV=production
-      - PORT=8000
+      - PORT=80
       - TRANSCODE_INPUT_PATH=./s3
       - TRANSCODE_OUTPUT_PATH=./media
       - MQ_USER=singsphere

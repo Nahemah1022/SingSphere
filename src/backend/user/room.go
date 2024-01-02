@@ -261,6 +261,9 @@ func (r *Rooms) GetStats() RoomsStats {
 		Rooms: []*RoomWrap{},
 	}
 	for _, room := range r.rooms {
+		if len(room.users) == 0 {
+			continue
+		}
 		stats.Online += room.GetUsersCount()
 		stats.Rooms = append(stats.Rooms, room.Wrap(nil))
 	}
