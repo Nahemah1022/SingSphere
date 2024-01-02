@@ -98,5 +98,5 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 };
 export const useStore = (): Store => {
   const context = useContext(StoreContext);
-  return context as Store; // store is defined anyway
+  return context as Store;
 };

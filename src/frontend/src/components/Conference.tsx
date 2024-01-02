@@ -11,13 +11,11 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
 import axios from 'axios';
-import { aws4Interceptor } from 'aws4-axios';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search';
 import { ColorRing } from 'react-loader-spinner';
 
 interface ConferenceProps {
@@ -251,7 +249,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
     const handleSearch = async (option: string) => {
       try {
         let formattedTerm = '';
-        if (option == 'song') {
+        if (option === 'song') {
           // Change all the spaces to underscore and make all characters lowercase
           formattedTerm = searchTerm.replace(/ /g, '_').toLowerCase();
 
@@ -280,7 +278,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
     // Queue song by sending POST request to lambda function
     const queueSong = async (result: Song) => {
       try {
-        const url = 'https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/POST/final-music';
+        // const url = 'https://zuooeb1uui.execute-api.us-east-1.amazonaws.com/Dev/POST/final-music';
 
         const requestBody = {
           song: result.search_term,
