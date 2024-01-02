@@ -13,6 +13,10 @@ RUN go mod download
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
+RUN mkdir -p ./media
+RUN apt update
+RUN apt install -y ffmpeg
+
 # Build the Go app
 RUN go build -o main .
 

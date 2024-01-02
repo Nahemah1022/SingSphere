@@ -4,7 +4,7 @@
   display: flex;
   justify-content: center;
   box-sizing: border-box;
-  font-family: "Urbanist", Helvetica, sans-serif;
+  font-family: 'Urbanist', Helvetica, sans-serif;
 }
 
 .wrapper {
@@ -22,7 +22,7 @@
 }
 
 .displayContainer {
-	flex-grow: 3;
+  flex-grow: 3;
 }
 
 .speakButton {
@@ -66,17 +66,17 @@
 }
 
 .mutebuttons {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	flex-direction: row;
-	margin-right: 3em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  margin-right: 3em;
 }
 
 /* Other volume formatting please see style.css*/
 .volumeContainer {
-	margin-left: 4em;
-	width: 10em;
+  margin-left: 4em;
+  width: 10em;
 }
 
 .buttonJoin {
@@ -95,132 +95,134 @@
 }
 
 .addSong {
-	background: linear-gradient(180deg, #E045B8, #FFCE85);
-	width: 10em;
-	height: 3em;
-	border: none;
-	outline: none;
-	box-shadow: none;
-	border-radius: 0.5em;
-	cursor: pointer;
+  background: linear-gradient(180deg, #e045b8, #ffce85);
+  width: 10em;
+  height: 3em;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  border-radius: 0.5em;
+  cursor: pointer;
 }
 .addSong:hover {
-	background-color: #dd1a89;
+  background-color: #dd1a89;
 }
 
 .roomModal {
-	width: 50%;
-	height: 70%;
-	margin: auto;
-	margin-top: 5%;
-	background: linear-gradient(180deg, #E045B8, #FFCE85);
-	color: white;
-	border: none;
-	box-shadow: none;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 1.5em;
+  width: 50%;
+  height: 70%;
+  margin: auto;
+  margin-top: 5%;
+  background: linear-gradient(180deg, #e045b8, #ffce85);
+  color: white;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5em;
 }
 
 .searchBar {
-	display: flex;
-	align-items: center;
-	width: 100%;
-	margin: 1em;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 1em;
 }
 
 .searchInput {
-	border-radius: 5em;
-	width: 100%;
-	height: 45px;
-	border: none;
-	outline: none;
-	box-shadow: none;
-	padding-left: 1em;
-	margin: 0.2em;
+  border-radius: 5em;
+  width: 100%;
+  height: 45px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  padding-left: 1em;
+  margin: 0.2em;
 }
 
-.searchArtist, .searchSong, .searchCategory {
-	background-color: #E045AB;
-	color: white;
-	border: none;
-	outline: none;
-	box-shadow: none;
-	border-radius: 6em;
-	font-size: 0.8em;
-	padding-left: 0.2em;
-	padding-right: 0.2em;
-	padding-top: 0.1em;
-	padding-bottom: 0.1em;
-	margin: 0.2em;
-	min-width: 8.5em;
-	height: 50px;
+.searchArtist,
+.searchSong,
+.searchCategory {
+  background-color: #e045ab;
+  color: white;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  border-radius: 6em;
+  font-size: 0.8em;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+  padding-top: 0.1em;
+  padding-bottom: 0.1em;
+  margin: 0.2em;
+  min-width: 8.5em;
+  height: 50px;
 }
 .searchArtist:hover {
-	background-color: #dd1a89;
+  background-color: #dd1a89;
 }
 .searchSong {
-	background-color: #7B61FF;
+  background-color: #7b61ff;
 }
 .searchSong:hover {
-	background-color: rgb(92, 59, 252);
+  background-color: rgb(92, 59, 252);
 }
 .searchCategory {
-	background-color: #ffab2c;
+  background-color: #ffab2c;
 }
 .searchCategory:hover {
-	background-color: #ff8e03;
+  background-color: #ff8e03;
 }
 
 .searchResults {
-	margin-top: 20px;
-	width: 100%;
-	flex-grow: 3;
+  margin-top: 20px;
+  width: 100%;
+  flex-grow: 3;
 }
 
 .resultItems {
-	margin: auto;
-	padding: 10px;
-	border-bottom: 1px solid white;
-	width: 100%;
+  margin: auto;
+  padding: 10px;
+  border-bottom: 1px solid white;
+  width: 100%;
 }
 
 .addButton {
-	margin-left: 10px;
-	background-color: #FFB951;
-	color: white;
-	outline: none;
-	border: none;
-	box-shadow: none;
-	width: 7em;
-	border-radius: 5em;
-	cursor: pointer;
+  margin-left: 10px;
+  background-color: #ffb951;
+  color: white;
+  outline: none;
+  border: none;
+  box-shadow: none;
+  width: 7em;
+  border-radius: 5em;
+  cursor: pointer;
 }
 .addButton:hover {
-	background-color: #ffe9a1;
+  background-color: #ffe9a1;
 }
 
 .searchMsg {
-	width: 100%;
-	text-align: center;
-	padding: 0;
-	margin: 0;
+  width: 100%;
+  text-align: center;
+  padding: 0;
+  margin: 0;
 }
 
 .artist {
-	display: flex;
-	justify-content: flex-end;
-	margin-right: 1em;
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 1em;
 }
 
 .countDown {
-	position: fixed;
-	z-index: 9999;
-	padding: 1.5em;
-	width: 100%;
-	background-color: #161c26;
-	color: white;
-	text-align: center;
+  position: fixed;
+  z-index: 9999;
+  padding: 1.5em;
+  width: 100%;
+  background-color: #161c26;
+  color: white;
+  text-align: center;
 }

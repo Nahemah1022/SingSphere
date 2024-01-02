@@ -8,38 +8,39 @@ import (
 	"os"
 	"time"
 
+	"github.com/Nahemah1022/singsphere-backend/user"
 	"github.com/gorilla/mux"
-	"github.com/pion/webrtc/v2"
+	"github.com/joho/godotenv"
 )
 
-// Prepare the configuration
-var peerConnectionConfig = webrtc.Configuration{
-	ICEServers: []webrtc.ICEServer{
-		{
-			URLs: []string{"stun:stun.l.google.com:19302"},
-		},
-	},
-}
-
 func main() {
-	fmt.Println("Hello")
-	rooms := NewRooms()
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
+	fmt.Println(os.Getenv("PORT"))
+	rooms := user.NewRooms()
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/stats", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Headers", "*")
+		w.Header().Add("Access-Control-Allow-Origin", "*")
 		bytes, err := json.Marshal(rooms.GetStats())
 		if err != nil {
 			http.Error(w, fmt.Sprint(err), 500)
 		}
 		w.Write(bytes)
 	}).Methods("GET")
+
 	router.HandleFunc("/api/rooms/{id}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Headers", "*")
 		w.Header().Add("Access-Control-Allow-Origin", "*")
 		vars := mux.Vars(r)
 		roomID := vars["id"]
 		room, err := rooms.Get(roomID)
-		if err == errNotFound {
+		if err == user.ErrNotFound {
 			http.NotFound(w, r)
 			return
 		}
@@ -51,7 +52,7 @@ func main() {
 	}).Methods("GET")
 
 	router.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(rooms, w, r)
+		user.ServeWs(rooms, w, r)
 	})
 
 	// go rooms.Watch()

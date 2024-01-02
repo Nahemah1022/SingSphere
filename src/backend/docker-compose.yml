@@ -1,22 +1,23 @@
 version: "3"
 
 services:
-  app:
+  app-test:
     restart: always
     build: .
     image: nahemah1022/sing-shpere:v1.0
+    user: root
     environment:
       - GO_ENV=production
       - PORT=80
+      - TRANSCODE_INPUT_PATH=./s3
+      - TRANSCODE_OUTPUT_PATH=./media
+      - MQ_USER=singsphere
+      - MQ_PASSWORD=singsphere123
     network_mode: "host"
-    logging:
-      driver: awslogs
-      options:
-        awslogs-region: us-east-1
-        awslogs-group: voice-server
     volumes:
       - go_mod:/go/pkg/mod
       - go_build:/root/.cache/go-build
+      - /var/s3:/app/s3
 
 volumes:
   go_mod:
