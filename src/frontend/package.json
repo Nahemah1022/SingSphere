@@ -22,8 +22,8 @@
     "react-loader-spinner": "^6.1.1-0",
     "react-router-dom": "^6.3.0",
     "react-scripts": "4.0.3",
-    "typescript": "*",
     "react-toastify": "^8.1.0",
+    "typescript": "*",
     "uuid": "^9.0.1"
   },
   "scripts": {
@@ -40,6 +40,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
     "eslint-config-react-app": "^7.0.1",

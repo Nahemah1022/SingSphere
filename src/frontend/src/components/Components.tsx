@@ -149,9 +149,6 @@ export const EmptyRoom = () => {
           👀
         </span>
       </div>
-      <div style={{ textAlign: 'center', fontSize: 16, color: 'white', width: '10em' }}>
-        Empty <br /> Room
-      </div>
       <div style={{ textAlign: 'center', fontSize: 16, color: 'white' }}>Empty Room</div>
     </div>
   );
