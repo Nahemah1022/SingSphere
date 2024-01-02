@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useRef, useState, useEffect } from 'react';
 import css from './VoiceChat.module.css';
-import { UserMe, UsersRemoteList, EmptyRoom } from './Components';
+import bggif from '../assets/bggif2.gif';
+import { UsersRemoteList, EmptyRoom, ButtonMicrohone, ButtonSpeaker } from './Components';
 import { useStore, User } from '../api/api';
 import { useAudioContext } from './context/audio';
 import { useMediaStreamManager } from './context/mediastream';
@@ -16,7 +17,10 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import AddIcon from '@mui/icons-material/Add';
+import InputRange from 'react-input-range';
 import { ColorRing } from 'react-loader-spinner';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface ConferenceProps {
   roomId: string;
@@ -27,22 +31,6 @@ interface Song {
   search_term: string;
   labels: string[];
 }
-
-//const client = axios.create();
-
-//const interceptor = aws4Interceptor({
-//	options: {
-//		region: "us-east-1",
-//		service: "execute-api",
-//		assumeRoleArn: "arn:aws:iam::601912694676:user/Josephine"
-//	},
-//	credentials: {
-//		accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
-//		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? ""
-//	}
-//});
-
-//client.interceptors.request.use(interceptor);
 
 const Conference = ({ roomId }: ConferenceProps) => {
   const audioContext = useAudioContext();
@@ -55,13 +43,49 @@ const Conference = ({ roomId }: ConferenceProps) => {
   const { state, update } = store;
 
   // For searching and queueing songs
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [songs, setSongs] = useState<Song[]>([]);
-  const [open, setOpen] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+  const [open, setOpen] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  // For counting down song duration
+  const [startCounting, setStartCounting] = useState<boolean>(false);
+  const [duration, setDuration] = useState<number>(0);
+
+  // For formatting the result list by removing '_', capitalizing, and removing '.mp3'
+  const capitalizeAndFormat = (str: string): string =>
+    str
+      .replace(/_/g, ' ')
+      .replace(/\.mp3$/, '')
+      .replace(/\b\w/g, (match) => match.toUpperCase());
+
+  // Format the seconds into MM:SS format
+  const formatTime = (timeInSeconds: number): string => {
+    const minutes: number = Math.floor(timeInSeconds / 60);
+    const seconds: number = timeInSeconds % 60;
+    const formattedMinutes: string = minutes < 10 ? `0${minutes}` : minutes.toString();
+    const formattedSeconds: string = seconds < 10 ? `0${seconds}` : seconds.toString();
+    return `${formattedMinutes}:${formattedSeconds}`;
+  };
+
+  useEffect(() => {
+    let countdownInterval: NodeJS.Timeout;
+
+    if (startCounting && duration > 0) {
+      countdownInterval = setInterval(() => {
+        setDuration((prevDuration) => prevDuration - 1);
+      }, 1000);
+    }
+
+    return () => {
+      // Clear the interval when the component unmounts or when startCounting becomes false
+      clearInterval(countdownInterval);
+    };
+  }, [startCounting, duration]);
+
+  // Transport / Websocket
   const refAudioEl = useRef<HTMLAudioElement | null>(null);
 
   const refTransport = useRef<WebSocketTransport>();
@@ -169,11 +193,27 @@ const Conference = ({ roomId }: ConferenceProps) => {
           throw new Error('no user');
         }
         store.api.roomUserUpdate(event.user);
+        // Alert when a song is enqueued
       } else if (event.type === 'enqueue') {
-        alert('enqueued');
+        const song = event?.song?.name ?? '';
+        if (song) {
+          toast(`Enqueued: ${capitalizeAndFormat(song)} 🎸`);
+        }
+
         console.log(event.song);
+        // Alert when the next song is coming up
       } else if (event.type === 'next_song') {
-        alert('next_song');
+        const song = event?.song?.name ?? '';
+        const duration = event?.song?.duration ?? '';
+        if (song) {
+          toast(`Next Up: ${capitalizeAndFormat(song)} 🎤`);
+        }
+
+        if (duration) {
+          setDuration(duration);
+          setStartCounting(true);
+        }
+
         console.log(event.song);
       } else {
         throw new Error(`type ${event.type} not implemented`);
@@ -299,50 +339,16 @@ const Conference = ({ roomId }: ConferenceProps) => {
       }
     };
 
-    // For formatting the result list by removing '_', capitalizing, and removing '.mp3'
-    const capitalizeAndFormat = (str: string): string =>
-      str
-        .replace(/_/g, ' ')
-        .replace(/\.mp3$/, '')
-        .replace(/\b\w/g, (match) => match.toUpperCase());
-
     return (
       <div className={css.wrapper}>
-        <div className={css.top}>{renderUsers()}</div>
-        <div className={css.bottom}>
-          {user && (
-            <UserMe
-              volume={volume}
-              setVolume={setVolume}
-              user={user}
-              isMutedMicrophone={state.isMutedMicrophone}
-              isMutedSpeaker={state.isMutedSpeaker}
-              onClickMuteSpeaker={() => {
-                try {
-                  update({ isMutedSpeaker: !state.isMutedSpeaker });
-                } catch (error) {
-                  alert(error);
-                }
-              }}
-              onClickMuteMicrohone={async (event) => {
-                if (!mediaStreamManager.isMicrophoneRequested) {
-                  await mediaStreamManager.requestMicrophone();
-                }
-                if (mediaStreamManager.isMicrophoneMuted) {
-                  mediaStreamManager.microphoneUnmute();
-                  transport.sendEvent({ type: 'unmute', user });
-                  update({ isMutedMicrophone: false });
-                } else {
-                  mediaStreamManager.microphoneMute();
-                  transport.sendEvent({ type: 'mute', user });
-                  update({ isMutedMicrophone: true });
-                }
-              }}
-            />
-          )}
+        <div className={css.countDown}>🪩 Time Remaining: {formatTime(duration)}</div>
+        <ToastContainer />
+        <div className={css.userContainer}>{renderUsers()}</div>
+        <div className={css.displayContainer}>
+          <img src={bggif} width='100%' height='100%' alt='background' />
           <AppBar
             style={{
-              height: '4em',
+              height: '5em',
               backgroundColor: '#1F2937',
               boxShadow: 'none',
               outline: 'none',
@@ -355,9 +361,69 @@ const Conference = ({ roomId }: ConferenceProps) => {
               flexGrow: '1',
             }}
           >
-            <button className={css.addSong} onClick={handleOpen}>
-              <MusicNoteIcon style={{ color: 'white' }} />
-            </button>
+            <div className={css.buttons}>
+              <div className={css.mutebuttons}>
+                <ButtonMicrohone
+                  muted={state.isMutedMicrophone}
+                  onClick={async (event) => {
+                    if (!mediaStreamManager.isMicrophoneRequested) {
+                      await mediaStreamManager.requestMicrophone();
+                    }
+                    if (mediaStreamManager.isMicrophoneMuted) {
+                      mediaStreamManager.microphoneUnmute();
+                      transport.sendEvent({ type: 'unmute', user });
+                      update({ isMutedMicrophone: false });
+                    } else {
+                      mediaStreamManager.microphoneMute();
+                      transport.sendEvent({ type: 'mute', user });
+                      update({ isMutedMicrophone: true });
+                    }
+                  }}
+                />
+                <ButtonSpeaker
+                  muted={state.isMutedSpeaker}
+                  onClick={() => {
+                    try {
+                      update({ isMutedSpeaker: !state.isMutedSpeaker });
+                    } catch (error) {
+                      alert(error);
+                    }
+                  }}
+                />
+              </div>
+              <button className={css.addSong} onClick={handleOpen}>
+                <MusicNoteIcon style={{ color: 'white' }} />
+              </button>
+              <div className={css.volumeContainer}>
+                <InputRange
+                  classNames={{
+                    activeTrack: 'input-range__track input-range__track--active',
+                    disabledInputRange: 'input-range input-range--disabled',
+                    inputRange: 'input-range',
+                    labelContainer: 'input-range__label-container',
+                    maxLabel: 'input-range__label input-range__label--max',
+                    minLabel: 'input-range__label input-range__label--min',
+                    slider: 'input-range__slider',
+                    sliderContainer: 'input-range__slider-container',
+                    track: 'input-range__track input-range__track--background',
+                    valueLabel: 'input-range__label input-range__label--value',
+                  }}
+                  maxValue={10}
+                  minValue={0}
+                  value={volume}
+                  onChange={(value) => {
+                    setVolume(value as any);
+                    let stereoAudio = document.querySelectorAll(
+                      '.stereo_audio',
+                    ) as NodeListOf<HTMLAudioElement>;
+                    if (stereoAudio.length !== 0) {
+                      stereoAudio[0].volume = (value as any) / 10;
+                    }
+                    console.log(value);
+                  }}
+                />
+              </div>
+            </div>
           </AppBar>
 
           <Modal

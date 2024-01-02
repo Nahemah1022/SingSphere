@@ -11,7 +11,18 @@
   height: 100%;
   width: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+}
+
+.userContainer {
+  background-color: #161c26;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.displayContainer {
+  flex-grow: 3;
 }
 
 .speakButton {
@@ -50,6 +61,22 @@
 .buttons {
   display: flex;
   justify-content: center;
+  align-items: center;
+  flex-direction: row;
+}
+
+.mutebuttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  margin-right: 3em;
+}
+
+/* Other volume formatting please see style.css*/
+.volumeContainer {
+  margin-left: 4em;
+  width: 10em;
 }
 
 .buttonJoin {
@@ -67,23 +94,6 @@
   background-color: rgba(0, 0, 0, 0.4);
 }
 
-.top {
-  flex-grow: 2;
-  background-color: rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bottom {
-  background-color: rgba(183, 49, 49, 0.3);
-  min-height: 250px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex-grow: 1;
-}
-
 .addSong {
   background: linear-gradient(180deg, #e045b8, #ffce85);
   width: 10em;
@@ -92,6 +102,10 @@
   outline: none;
   box-shadow: none;
   border-radius: 0.5em;
+  cursor: pointer;
+}
+.addSong:hover {
+  background-color: #dd1a89;
 }
 
 .roomModal {
@@ -184,6 +198,10 @@
   box-shadow: none;
   width: 7em;
   border-radius: 5em;
+  cursor: pointer;
+}
+.addButton:hover {
+  background-color: #ffe9a1;
 }
 
 .searchMsg {
@@ -197,4 +215,14 @@
   display: flex;
   justify-content: flex-end;
   margin-right: 1em;
+}
+
+.countDown {
+  position: fixed;
+  z-index: 9999;
+  padding: 1.5em;
+  width: 100%;
+  background-color: #161c26;
+  color: white;
+  text-align: center;
 }

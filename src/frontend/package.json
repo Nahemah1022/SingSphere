@@ -23,6 +23,7 @@
     "react-router-dom": "^6.3.0",
     "react-scripts": "4.0.3",
     "typescript": "*",
+    "react-toastify": "^8.1.0",
     "uuid": "^9.0.1"
   },
   "scripts": {

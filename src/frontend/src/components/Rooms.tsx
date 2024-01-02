@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import logo from '../assets/logo.png';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -41,7 +40,7 @@ function Rooms() {
   };
 
   const handleNewRoom = async () => {
-    const newKTVroomId = uuidv4();
+    const newKTVroomId = Math.random().toString(36).slice(2, 6);
     navigate(`/${newKTVroomId}`);
 
     // Fetch ktv rooms after creating a new room
