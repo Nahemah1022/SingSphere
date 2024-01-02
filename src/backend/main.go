@@ -10,10 +10,17 @@ import (
 
 	"github.com/Nahemah1022/singsphere-backend/user"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	fmt.Println("Hello")
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
+	fmt.Println(os.Getenv("PORT"))
 	rooms := user.NewRooms()
 	router := mux.NewRouter()
 

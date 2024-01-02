@@ -418,7 +418,7 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 	// new goroutines.
 	go user.writePump()
 	go user.readPump()
-	// go user.Watch()
+	go user.Watch()
 
 	user.SendEventUser()
 	user.SendEventRoom()
