@@ -77,7 +77,6 @@ type User struct {
 	inTracksLock  sync.RWMutex
 	outTracks     map[uint32]*webrtc.Track // Rest of the room's tracks
 	outTracksLock sync.RWMutex
-	stereoTreck   *webrtc.Track
 
 	rtpCh chan *rtp.Packet
 
@@ -352,6 +351,7 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				panic(err)
 			}
+			user.room.Join(user)
 			go user.room.StereoPlay()
 			// user.room.requests <- "peach.mp3"
 		} else if connectionState == webrtc.ICEConnectionStateDisconnected ||
@@ -359,23 +359,33 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 			connectionState == webrtc.ICEConnectionStateClosed {
 
 			user.stop = true
-			senders := user.pc.GetSenders()
+
 			for _, roomUser := range user.room.GetOtherUsers(user) {
 				user.log("removing tracks from user")
-				for _, sender := range senders {
-					ssrc := sender.Track().SSRC()
-
+				// for _, sender := range senders {
+				for _, receiver := range user.pc.GetReceivers() {
+					if receiver.Track() == nil {
+						continue
+					}
+					ssrc := receiver.Track().SSRC()
+					
 					roomUserSenders := roomUser.pc.GetSenders()
 					for _, roomUserSender := range roomUserSenders {
+						// fmt.Printf("%v vs %v\n", ssrc, roomUserSender.Track().SSRC())
 						if roomUserSender.Track().SSRC() == ssrc {
 							err := roomUser.pc.RemoveTrack(roomUserSender)
 							if err != nil {
 								panic(err)
 							}
+							roomUser.outTracksLock.Lock()
+							delete(roomUser.outTracks, ssrc)
+							roomUser.outTracksLock.Unlock()
 						}
 					}
 				}
 			}
+
+			// user.pc.RemoveTrack()
 
 		}
 	})
@@ -406,19 +416,11 @@ func ServeWs(rooms *Rooms, w http.ResponseWriter, r *http.Request) {
 		go user.broadcastIncomingRTP()
 	})
 
-	// user.conn.SetCloseHandler(func(code int, text string) error {
-	// 	log.Printf("WS connection closed, %s\n", text)
-	// 	err := user.pc.Close()
-	// 	return err
-	// })
-
-	user.room.Join(user)
-
 	// Allow collection of memory referenced by the caller by doing all work in
 	// new goroutines.
 	go user.writePump()
 	go user.readPump()
-	go user.Watch()
+	// go user.Watch()
 
 	user.SendEventUser()
 	user.SendEventRoom()
