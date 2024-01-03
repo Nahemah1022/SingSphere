@@ -133,7 +133,8 @@ func Play(filepath string, targetTrack *webrtc.Track, cancel context.CancelFunc)
 		lastGranule = pageHeader.GranulePosition
 
 		if oggErr = targetTrack.WriteSample(media.Sample{Data: pageData, Samples: uint32(sampleCount)}); oggErr != nil {
-			panic(oggErr)
+			log.Println(oggErr)
+			break
 		}
 
 		// Convert seconds to Milliseconds, Sleep doesn't accept floats
