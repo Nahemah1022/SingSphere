@@ -76,14 +76,9 @@ func registerRouters() *mux.Router {
 		vars := mux.Vars(req)
 		roomID := vars["id"]
 		room := roomManager.GetOrCreate(roomID)
-		newUser := user.New(room.UserJoinCh, room.UserLeaveCh)
-		if err := newUser.WsConnect(w, req); err != nil {
-			log.Println(err)
-			return
-		}
-		if err := newUser.PeerConnect(); err != nil {
-			log.Println(err)
-			return
+		newUser, err := user.New(room.UserJoinCh, room.UserLeaveCh, w, req)
+		if err != nil {
+			panic(err)
 		}
 		go newUser.Run()
 	})

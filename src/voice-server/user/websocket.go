@@ -21,8 +21,15 @@ const (
 )
 
 var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
+	newline  = []byte{'\n'}
+	space    = []byte{' '}
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 )
 
 func (u *User) WsConnect(w http.ResponseWriter, r *http.Request) error {
