@@ -1,4 +1,4 @@
-package user
+package signal
 
 import (
 	"bytes"
@@ -8,6 +8,11 @@ import (
 
 	"github.com/gorilla/websocket"
 )
+
+type Websocket struct {
+	conn         *websocket.Conn
+	closeHandler func()
+}
 
 const (
 	// Time allowed to write a message to the peer.
@@ -32,28 +37,31 @@ var (
 	}
 )
 
-func (u *User) wsConnect(w http.ResponseWriter, r *http.Request) error {
+func New(w http.ResponseWriter, r *http.Request, closeHandler func()) (*Websocket, error) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
-		return err
+		return nil, err
 	}
 	conn.SetReadLimit(maxMessageSize)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
-	conn.SetPongHandler(func(string) error { u.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	u.conn = conn
+	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	ws := &Websocket{
+		conn:         conn,
+		closeHandler: closeHandler,
+	}
 	log.Println("ws connected")
-	return nil
+	return ws, nil
 }
 
-func (u *User) wsRead() {
+func (ws *Websocket) ReadLoop() {
+	defer ws.conn.Close()
 	for {
-		_, message, err := u.conn.ReadMessage()
+		_, message, err := ws.conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-				log.Println(err)
+				go ws.closeHandler()
 			}
 			break
 		}
