@@ -6,7 +6,7 @@ import (
 	"github.com/pion/webrtc/v3"
 )
 
-func (u *User) PeerConnect() error {
+func (u *User) peerConnect() error {
 	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{

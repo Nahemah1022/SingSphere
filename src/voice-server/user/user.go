@@ -2,6 +2,7 @@ package user
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -26,22 +27,28 @@ type User struct {
 	leaveCh chan *User
 }
 
+var emojis = []string{
+	"😎", "🧐", "🤡", "👻", "😷", "🤗", "😏",
+	"👽", "👨‍🚀", "🐺", "🐯", "🦁", "🐶", "🐼", "🙈",
+}
+
 func New(joinCh chan *User, leaveCh chan *User, w http.ResponseWriter, req *http.Request) (*User, error) {
 	newUser := &User{
 		ID:      strconv.FormatInt(time.Now().UnixNano(), 10), // generate random id based on timestamp
 		Mute:    true,
+		Emoji:   emojis[rand.Intn(len(emojis))],
 		joinCh:  joinCh,
 		leaveCh: leaveCh,
 	}
 
 	// Establish websocket connection
-	if err := newUser.WsConnect(w, req); err != nil {
+	if err := newUser.wsConnect(w, req); err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
 	// Establish webrtc peer connection
-	if err := newUser.PeerConnect(); err != nil {
+	if err := newUser.peerConnect(); err != nil {
 		log.Println(err)
 		return nil, err
 	}

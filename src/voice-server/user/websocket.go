@@ -32,7 +32,7 @@ var (
 	}
 )
 
-func (u *User) WsConnect(w http.ResponseWriter, r *http.Request) error {
+func (u *User) wsConnect(w http.ResponseWriter, r *http.Request) error {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
