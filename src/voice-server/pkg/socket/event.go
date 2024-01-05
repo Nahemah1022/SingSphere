@@ -26,7 +26,7 @@ type OutboundEvent struct {
 }
 
 // SendEvent enocde event json body an sends it to write loop
-func (ws *Websocket) SendEvent(event *OutboundEvent) error {
+func (ws *Websocket) Send(event *OutboundEvent) error {
 	bytes, err := json.Marshal(event)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func (ws *Websocket) SendEvent(event *OutboundEvent) error {
 
 // SendErr sends error in json format to web socket
 func (ws *Websocket) SendError(err error) error {
-	return ws.SendEvent(&OutboundEvent{
+	return ws.Send(&OutboundEvent{
 		EventBase{Type: "error", Desc: fmt.Sprint(err)},
 	})
 }

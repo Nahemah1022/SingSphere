@@ -56,6 +56,13 @@ func (u *User) handleInboundEvent(event *socket.InboundEvent) error {
 	return nil
 }
 
+func (u *User) SendEvent(event *socket.OutboundEvent) error {
+	if err := u.ws.Send(event); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *User) Run() {
 	defer func() {
 		u.pc.Close()
