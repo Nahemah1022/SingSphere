@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nahemah1022/singsphere-voice-server/pkg/signal"
+	"github.com/Nahemah1022/singsphere-voice-server/pkg/socket"
 	"github.com/Nahemah1022/singsphere-voice-server/room"
 	"github.com/Nahemah1022/singsphere-voice-server/user"
 	"github.com/gorilla/mux"
@@ -79,7 +79,7 @@ func registerRouters() *mux.Router {
 		room := roomManager.GetOrCreate(roomID)
 
 		// Establish websocket connection and inject it as external dependency to user
-		ws, err := signal.New(w, req, func() {
+		ws, err := socket.New(w, req, func() {
 			log.Println("ws closed")
 		})
 		if err != nil {
