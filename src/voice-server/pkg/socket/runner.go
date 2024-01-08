@@ -23,7 +23,7 @@ const (
 	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
 	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
+	pongWait = time.Second
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 	// Maximum message size allowed from peer.
@@ -42,6 +42,7 @@ var (
 	}
 )
 
+// New construct and return a new websocket session as a standalone dependency
 func New(w http.ResponseWriter, r *http.Request, closeHandler func()) (*Websocket, error) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -69,7 +70,7 @@ func (ws *Websocket) Run() {
 		close(ws.sendCh)
 		close(ws.InboundEventCh)
 	}()
-	ws.wg.Add(1)
+	ws.wg.Add(2)
 	go ws.readLoop()
 	go ws.writeLoop()
 	ws.wg.Wait()

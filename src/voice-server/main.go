@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Nahemah1022/singsphere-voice-server/pkg/rtc"
 	"github.com/Nahemah1022/singsphere-voice-server/pkg/socket"
 	"github.com/Nahemah1022/singsphere-voice-server/room"
 	"github.com/Nahemah1022/singsphere-voice-server/user"
@@ -87,11 +88,14 @@ func registerRouters() *mux.Router {
 			return
 		}
 
-		newUser, err := user.New(room.UserJoinCh, room.UserLeaveCh, ws)
+		// Establish WebRTC peer conection and inject it as external dependency to user
+		rtcNode, err := rtc.New()
 		if err != nil {
 			log.Println(err)
 			return
 		}
+
+		newUser := user.New(room.UserJoinCh, room.UserLeaveCh, ws, rtcNode)
 		go newUser.Run()
 	})
 

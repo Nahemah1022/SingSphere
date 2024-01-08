@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -8,24 +9,21 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Nahemah1022/singsphere-voice-server/pkg/rtc"
 	"github.com/Nahemah1022/singsphere-voice-server/pkg/socket"
 	"github.com/pion/webrtc/v3"
 )
 
-type UserWrap struct {
-	ID    string `json:"id"`
-	Emoji string `json:"emoji"`
-	Mute  bool   `json:"mute"`
-}
-
 type User struct {
-	ID      string
-	Emoji   string
-	Mute    bool
-	ws      *socket.Websocket
-	pc      *webrtc.PeerConnection
-	joinCh  chan *User
-	leaveCh chan *User
+	ID                string
+	Emoji             string
+	Mute              bool
+	ws                *socket.Websocket
+	rtc               *rtc.RtcNode
+	joinCh            chan *User
+	leaveCh           chan *User
+	MicReadyCtx       context.Context
+	micReadyCtxCancel context.CancelFunc
 }
 
 var emojis = []string{
@@ -33,48 +31,122 @@ var emojis = []string{
 	"👽", "👨‍🚀", "🐺", "🐯", "🦁", "🐶", "🐼", "🙈",
 }
 
-func New(joinCh chan *User, leaveCh chan *User, ws *socket.Websocket) (*User, error) {
-	newUser := &User{
-		ID:      strconv.FormatInt(time.Now().UnixNano(), 10), // generate random id based on timestamp
-		Mute:    true,
-		Emoji:   emojis[rand.Intn(len(emojis))],
-		joinCh:  joinCh,
-		leaveCh: leaveCh,
-		ws:      ws,
-	}
+var errNotImplemented = errors.New("not implemented")
 
-	// Establish webrtc peer connection
-	if err := newUser.peerConnect(); err != nil {
-		log.Println(err)
-		return nil, err
+func (u *User) Wrap() *socket.UserWrap {
+	return &socket.UserWrap{
+		ID:    u.ID,
+		Emoji: u.Emoji,
+		Mute:  u.Mute,
 	}
-	return newUser, nil
 }
 
-func (u *User) handleInboundEvent(event *socket.InboundEvent) error {
-	u.log("handle event: ", event.Type)
-	return nil
-}
-
-func (u *User) SendEvent(event *socket.OutboundEvent) error {
-	if err := u.ws.Send(event); err != nil {
-		return err
+func New(joinCh chan *User, leaveCh chan *User, ws *socket.Websocket, rtcNode *rtc.RtcNode) *User {
+	ctx, ctxCancel := context.WithCancel(context.TODO())
+	return &User{
+		ID:                strconv.FormatInt(time.Now().UnixNano(), 10), // generate random id based on timestamp
+		Mute:              true,
+		Emoji:             emojis[rand.Intn(len(emojis))],
+		joinCh:            joinCh,
+		leaveCh:           leaveCh,
+		ws:                ws,
+		rtc:               rtcNode,
+		MicReadyCtx:       ctx,
+		micReadyCtxCancel: ctxCancel,
 	}
-	return nil
 }
 
 func (u *User) Run() {
 	defer func() {
-		u.pc.Close()
+		u.rtc.Ternimate()
 		u.leaveCh <- u
 	}()
-	u.joinCh <- u
 	go u.ws.Run()
-	for inboundEvent := range u.ws.InboundEventCh {
-		if err := u.handleInboundEvent(inboundEvent); err != nil {
-			u.ws.SendError(errors.New("fail to handle inbound event"))
+	go func() {
+		// When client's ICE succesfully connected, notify its room through channel
+		<-u.rtc.ICEConnectedCtx.Done()
+		u.joinCh <- u
+	}()
+	go func() {
+		// When client's mic successfully attach, cancel the context to notify user's room
+		<-u.rtc.MicReadyCtx.Done()
+		u.micReadyCtxCancel()
+	}()
+	for {
+		select {
+		case inboundEvent := <-u.ws.InboundEventCh:
+			go u.handleInboundEvent(inboundEvent)
+		case offer := <-u.rtc.SignalChs.OfferCh:
+			if err := u.SendOffer(offer); err != nil {
+				u.ws.SendError(errors.New("fail to send offer"))
+			}
+		case answer := <-u.rtc.SignalChs.AnswerCh:
+			if err := u.SendAnswer(answer); err != nil {
+				u.ws.SendError(errors.New("fail to send answer"))
+			}
+		case ICEcandidate := <-u.rtc.SignalChs.CandidateCh:
+			if err := u.SendCandidate(ICEcandidate); err != nil {
+				u.ws.SendError(errors.New("fail to send ICE candidate"))
+			}
+		case <-u.rtc.ICEDisconnectedCtx.Done():
+			return
 		}
 	}
+}
+
+// handleInboundEvent handle the given inbound event based on its type
+func (u *User) handleInboundEvent(event *socket.InboundEvent) error {
+	if event == nil {
+		return errors.New("empty event")
+	}
+	u.log("handle event: ", event.Type)
+	if event.Type == "offer" {
+		if event.Offer == nil {
+			return u.ws.SendError(errors.New("empty offer"))
+		}
+		if err := u.rtc.HandleOffer(*event.Offer); err != nil {
+			return err
+		}
+		return nil
+	} else if event.Type == "answer" {
+		if event.Answer == nil {
+			return u.ws.SendError(errors.New("empty answer"))
+		}
+		if err := u.rtc.AcceptAnswer(*event.Answer); err != nil {
+			return u.ws.SendError(errors.New("fail to accept answer"))
+		}
+		return nil
+	} else if event.Type == "candidate" {
+		if event.Candidate == nil {
+			return u.ws.SendError(errors.New("empty candidate"))
+		}
+		if err := u.rtc.AddICECandidate(*event.Candidate); err != nil {
+			return u.ws.SendError(errors.New("fail to add candidate"))
+		}
+		return nil
+	} else if event.Type == "mute" {
+		return nil
+	} else if event.Type == "unmute" {
+		return nil
+	}
+	return u.ws.SendError(errNotImplemented)
+}
+
+// GetMicTrack return user's mic track or error if haven't attached yet
+func (u *User) GetMicTrack() (*webrtc.TrackLocalStaticRTP, error) {
+	if u.rtc.MicTrack == nil {
+		return nil, errors.New("client mic haven't attached yet")
+	}
+	return u.rtc.MicTrack, nil
+}
+
+// AcceptMicTrack attaches the given track to user's peer connection instance
+func (u *User) AcceptMicTrack(track *webrtc.TrackLocalStaticRTP) error {
+	_, err := u.rtc.AddTrack(track)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (u *User) log(msg ...interface{}) {

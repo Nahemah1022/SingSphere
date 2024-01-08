@@ -11,7 +11,7 @@ import (
 )
 
 type Room struct {
-	ID          string
+	Name        string
 	users       map[string]*user.User
 	UserJoinCh  chan *user.User
 	UserLeaveCh chan *user.User
@@ -41,13 +41,18 @@ func (r *Room) join(u *user.User) error {
 	if _, exist := r.users[u.ID]; exist {
 		return ErrUserAlreadyJoined
 	}
+	r.broadcast(&socket.OutboundEvent{
+		EventBase: socket.EventBase{Type: "user_join", Desc: fmt.Sprintf("user %s joined this room", u.ID)},
+		User:      u.Wrap(),
+	}, nil)
 	r.userLock.Lock()
+	if err := r.acceptRoomTracks(u); err != nil {
+		log.Println(err)
+	}
 	r.users[u.ID] = u
 	r.userLock.Unlock()
-	r.broadcast(&socket.OutboundEvent{
-		EventBase: socket.EventBase{Type: "join", Desc: fmt.Sprintf("user %s joined this room", u.ID)},
-	}, nil)
-	log.Println("New user joined room:", r.ID)
+	log.Println("New user joined room:", r.Name)
+	go r.attachMicTrack(u)
 	return nil
 }
 
@@ -60,9 +65,10 @@ func (r *Room) leave(u *user.User) error {
 	delete(r.users, u.ID)
 	r.userLock.Unlock()
 	r.broadcast(&socket.OutboundEvent{
-		EventBase: socket.EventBase{Type: "leave", Desc: fmt.Sprintf("user %s left this room", u.ID)},
+		EventBase: socket.EventBase{Type: "user_leave", Desc: fmt.Sprintf("user %s left this room", u.ID)},
+		User:      u.Wrap(),
 	}, nil)
-	log.Println("user leave room:", r.ID)
+	log.Println("user leave room:", r.Name)
 	return nil
 }
 

@@ -18,7 +18,7 @@ type RoomsStats struct {
 
 // Public representation of a room
 type RoomWrap struct {
-	ID      string `json:"id"`
+	Name    string `json:"name"`
 	Online  int    `json:"online"`
 	Playing *streaming.MusicWrap
 }
@@ -30,24 +30,24 @@ type RoomManager struct {
 var ErrNotFound = errors.New("not found")
 
 // Get a room or create one if it does not exist
-func (rm *RoomManager) GetOrCreate(id string) *Room {
-	if room, exist := rm.rooms[id]; exist {
+func (rm *RoomManager) GetOrCreate(name string) *Room {
+	if room, exist := rm.rooms[name]; exist {
 		return room
 	}
 	newRoom := &Room{
-		ID:          id,
+		Name:        name,
 		users:       make(map[string]*user.User),
 		UserJoinCh:  make(chan *user.User),
 		UserLeaveCh: make(chan *user.User),
 	}
-	rm.rooms[id] = newRoom
+	rm.rooms[name] = newRoom
 	go newRoom.run()
 	return newRoom
 }
 
 // Get a room if exists, return error instead
-func (rm *RoomManager) Get(id string) (*Room, error) {
-	if room, exist := rm.rooms[id]; exist {
+func (rm *RoomManager) Get(name string) (*Room, error) {
+	if room, exist := rm.rooms[name]; exist {
 		return room, nil
 	}
 	return nil, ErrNotFound
@@ -70,7 +70,7 @@ func (rm *RoomManager) GetStats() RoomsStats {
 
 func (r *Room) Wrap() *RoomWrap {
 	return &RoomWrap{
-		ID:      r.ID,
+		Name:    r.Name,
 		Online:  len(r.users),
 		Playing: nil,
 	}

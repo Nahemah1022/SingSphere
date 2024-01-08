@@ -23,6 +23,17 @@ type InboundEvent struct {
 
 type OutboundEvent struct {
 	EventBase
+	// Sender string `json:"sender,omitempty"` // Should be speficied if it is a broadcast event
+	Offer     *webrtc.SessionDescription `json:"offer,omitempty"`
+	Answer    *webrtc.SessionDescription `json:"answer,omitempty"`
+	Candidate *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
+	User      *UserWrap                  `json:"user,omitempty"`
+}
+
+type UserWrap struct {
+	ID    string `json:"id"`
+	Emoji string `json:"emoji"`
+	Mute  bool   `json:"mute"`
 }
 
 // SendEvent enocde event json body an sends it to write loop
@@ -37,9 +48,7 @@ func (ws *Websocket) Send(event *OutboundEvent) error {
 
 // SendErr sends error in json format to web socket
 func (ws *Websocket) SendError(err error) error {
-	return ws.Send(&OutboundEvent{
-		EventBase{Type: "error", Desc: fmt.Sprint(err)},
-	})
+	return ws.Send(&OutboundEvent{EventBase: EventBase{Type: "error", Desc: fmt.Sprint(err)}})
 }
 
 // recieveEvent decode inbound event raw bytes and push it to public channel for user access
