@@ -61,7 +61,8 @@ func (u *User) Run() {
 		u.rtc.Ternimate()
 		u.leaveCh <- u
 	}()
-	go u.ws.Run()
+	wsClose := make(chan struct{})
+	go u.ws.Run(wsClose)
 	go func() {
 		// When client's ICE succesfully connected, notify its room through channel
 		<-u.rtc.ICEConnectedCtx.Done()
@@ -76,6 +77,8 @@ func (u *User) Run() {
 		select {
 		case inboundEvent := <-u.ws.InboundEventCh:
 			go u.handleInboundEvent(inboundEvent)
+		case <-wsClose:
+			return
 		case answer := <-u.rtc.SignalChs.AnswerCh:
 			if err := u.SendAnswer(answer); err != nil {
 				u.ws.SendError(errors.New("fail to send answer"))

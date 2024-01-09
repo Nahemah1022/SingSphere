@@ -64,11 +64,12 @@ func New(w http.ResponseWriter, r *http.Request, closeHandler func()) (*Websocke
 }
 
 // Run starts the readLoop and writeLoop of the websocket, and terminate until one of them ends
-func (ws *Websocket) Run() {
+func (ws *Websocket) Run(wsClose chan<- struct{}) {
 	defer func() {
 		ws.conn.Close()
 		close(ws.sendCh)
 		close(ws.InboundEventCh)
+		wsClose <- struct{}{}
 	}()
 	ws.wg.Add(2)
 	go ws.readLoop()
