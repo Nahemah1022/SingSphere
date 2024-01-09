@@ -76,7 +76,7 @@ func (ws *Websocket) Run() {
 	ws.wg.Wait()
 }
 
-// ReadLoop is a goroutine that should be fired once the owner is ready to recieve message from websocket
+// ReadLoop is a goroutine that should be fired once the owner is ready to receive message from websocket
 func (ws *Websocket) readLoop() {
 	defer func() {
 		ws.stop = true
@@ -92,7 +92,7 @@ func (ws *Websocket) readLoop() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		go ws.recieveEvent(message)
+		go ws.receiveEvent(message)
 	}
 }
 

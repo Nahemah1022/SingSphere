@@ -76,10 +76,6 @@ func (u *User) Run() {
 		select {
 		case inboundEvent := <-u.ws.InboundEventCh:
 			go u.handleInboundEvent(inboundEvent)
-		case offer := <-u.rtc.SignalChs.OfferCh:
-			if err := u.SendOffer(offer); err != nil {
-				u.ws.SendError(errors.New("fail to send offer"))
-			}
 		case answer := <-u.rtc.SignalChs.AnswerCh:
 			if err := u.SendAnswer(answer); err != nil {
 				u.ws.SendError(errors.New("fail to send answer"))
@@ -133,7 +129,7 @@ func (u *User) handleInboundEvent(event *socket.InboundEvent) error {
 }
 
 // GetMicTrack return user's mic track or error if haven't attached yet
-func (u *User) GetMicTrack() (*webrtc.TrackLocalStaticRTP, error) {
+func (u *User) GetMicTrack() (*webrtc.TrackRemote, error) {
 	if u.rtc.MicTrack == nil {
 		return nil, errors.New("client mic haven't attached yet")
 	}
@@ -141,8 +137,18 @@ func (u *User) GetMicTrack() (*webrtc.TrackLocalStaticRTP, error) {
 }
 
 // AcceptMicTrack attaches the given track to user's peer connection instance
-func (u *User) AcceptMicTrack(track *webrtc.TrackLocalStaticRTP) error {
-	_, err := u.rtc.AddTrack(track)
+func (u *User) AcceptMicTrack(tr *webrtc.TrackRemote) error {
+	localTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(tr.Codec().RTPCodecCapability, "audio", "mic")
+
+	// keep track of the correspondence for sending remote packets
+	u.rtc.ListeningTracksLock.Lock()
+	u.rtc.ListeningTracks[tr.SSRC()] = localTrack
+	u.rtc.ListeningTracksLock.Unlock()
+
+	if newTrackErr != nil {
+		panic(newTrackErr)
+	}
+	_, err := u.rtc.AddTrack(localTrack)
 	if err != nil {
 		return err
 	}

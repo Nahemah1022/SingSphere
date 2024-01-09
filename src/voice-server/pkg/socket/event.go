@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Nahemah1022/singsphere-voice-server/streaming"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -28,12 +29,22 @@ type OutboundEvent struct {
 	Answer    *webrtc.SessionDescription `json:"answer,omitempty"`
 	Candidate *webrtc.ICECandidateInit   `json:"candidate,omitempty"`
 	User      *UserWrap                  `json:"user,omitempty"`
+	Room      *RoomWrap                  `json:"room,omitempty"`
 }
 
+// Public representation of a user
 type UserWrap struct {
 	ID    string `json:"id"`
 	Emoji string `json:"emoji"`
 	Mute  bool   `json:"mute"`
+}
+
+// Public representation of a room
+type RoomWrap struct {
+	Users   []*UserWrap `json:"users"`
+	Name    string      `json:"name"`
+	Online  int         `json:"online"`
+	Playing *streaming.MusicWrap
 }
 
 // SendEvent enocde event json body an sends it to write loop
@@ -51,8 +62,8 @@ func (ws *Websocket) SendError(err error) error {
 	return ws.Send(&OutboundEvent{EventBase: EventBase{Type: "error", Desc: fmt.Sprint(err)}})
 }
 
-// recieveEvent decode inbound event raw bytes and push it to public channel for user access
-func (ws *Websocket) recieveEvent(eventRaw []byte) {
+// receiveEvent decode inbound event raw bytes and push it to public channel for user access
+func (ws *Websocket) receiveEvent(eventRaw []byte) {
 	var event *InboundEvent
 	if err := json.Unmarshal(eventRaw, &event); err != nil {
 		log.Println(err)

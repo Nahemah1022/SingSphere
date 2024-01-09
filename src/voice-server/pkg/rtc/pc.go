@@ -4,23 +4,27 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 
+	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v3"
 )
 
 // RtcNode contains a peer connection instance and a set of communication channel associated with it
 type RtcNode struct {
-	pc                 *webrtc.PeerConnection
-	ICEConnectedCtx    context.Context
-	ICEDisconnectedCtx context.Context
-	MicTrack           *webrtc.TrackLocalStaticRTP
-	MicReadyCtx        context.Context
-	SignalChs          *SignalChannels
+	pc                  *webrtc.PeerConnection
+	ICEConnectedCtx     context.Context
+	ICEDisconnectedCtx  context.Context
+	MicTrack            *webrtc.TrackRemote
+	MicReadyCtx         context.Context
+	SignalChs           *SignalChannels
+	RtpCh               chan *rtp.Packet // Collect all rtp packets from user's mic
+	ListeningTracksLock sync.RWMutex
+	ListeningTracks     map[webrtc.SSRC]*webrtc.TrackLocalStaticRTP
 }
 
 // SignalChannels are a set of channels used for establishing WebRTC client-server connection
 type SignalChannels struct {
-	OfferCh     chan webrtc.SessionDescription
 	AnswerCh    chan webrtc.SessionDescription
 	CandidateCh chan *webrtc.ICECandidate
 }
@@ -48,10 +52,11 @@ func New() (*RtcNode, error) {
 		MicTrack:           nil,
 		MicReadyCtx:        MicReadyCtx,
 		SignalChs: &SignalChannels{
-			OfferCh:     make(chan webrtc.SessionDescription),
 			AnswerCh:    make(chan webrtc.SessionDescription),
 			CandidateCh: make(chan *webrtc.ICECandidate),
 		},
+		RtpCh:           make(chan *rtp.Packet, 100),
+		ListeningTracks: make(map[webrtc.SSRC]*webrtc.TrackLocalStaticRTP),
 	}
 
 	peerConnection.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
@@ -77,14 +82,9 @@ func New() (*RtcNode, error) {
 			"peerConnection.OnTrack",
 			fmt.Sprintf("client mic track has started, of type %d, ssrc: %d \n", tr.PayloadType(), tr.SSRC()),
 		)
-		localTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(tr.Codec().RTPCodecCapability, "audio", "mic")
-		if newTrackErr != nil {
-			panic(newTrackErr)
-		}
-		node.MicTrack = localTrack
+		node.MicTrack = tr
 		MicReadyCtxCancel()
-
-		// Forward the attached mic track to all other users in this room
+		go node.receiveTrackRTP(tr)
 	})
 	log.Println("PC connected")
 	return node, nil

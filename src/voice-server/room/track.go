@@ -1,9 +1,11 @@
 package room
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/Nahemah1022/singsphere-voice-server/user"
+	"github.com/pion/webrtc/v3"
 )
 
 // acceptRoomTracks adds all user's mic track in this room to the given user
@@ -19,6 +21,10 @@ func (r *Room) acceptRoomTracks(u *user.User) error {
 			return err
 		}
 	}
+	// To enable the newly attached mic track, we re-send the offer again
+	if err := u.SendOffer(); err != nil {
+		panic(err)
+	}
 	return nil
 }
 
@@ -30,10 +36,41 @@ func (r *Room) attachMicTrack(u *user.User) error {
 		return err
 	}
 	for _, roomUser := range r.users {
+		// skip the user himself
+		if u.ID == roomUser.ID {
+			continue
+		}
 		if err := roomUser.AcceptMicTrack(micTrack); err != nil {
 			log.Println("ERROR Add remote track", err)
 			return err
 		}
+		// To enable the newly attached mic track, we re-send the offer again
+		if err := roomUser.SendOffer(); err != nil {
+			panic(err)
+		}
 	}
+	go r.broadcastMicTrack(u, micTrack.SSRC())
 	return nil
+}
+
+// broadcastMicTrack broadcasts incoming RTP packets from the given user's mic to all room users
+func (r *Room) broadcastMicTrack(u *user.User, micTrackSSRC webrtc.SSRC) {
+	log.Println("Start Broadcasting")
+	for {
+		rtp, err := u.ReadRTP()
+		if err != nil {
+			panic(err)
+		}
+		for _, roomUser := range r.users {
+			// skip the user himself
+			if u.ID == roomUser.ID {
+				continue
+			}
+			err := roomUser.WriteRTP(rtp, micTrackSSRC)
+			if err != nil {
+				// panic(err)
+				fmt.Println(err)
+			}
+		}
+	}
 }

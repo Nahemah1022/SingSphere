@@ -34,7 +34,11 @@ func (u *User) SendAnswer(answer webrtc.SessionDescription) error {
 }
 
 // SendOffer creates webrtc offer
-func (u *User) SendOffer(offer webrtc.SessionDescription) error {
+func (u *User) SendOffer() error {
+	offer, err := u.rtc.Offer()
+	if err != nil {
+		return err
+	}
 	if err := u.SendEvent(&socket.OutboundEvent{
 		EventBase: socket.EventBase{Type: "offer"},
 		Offer:     &offer,

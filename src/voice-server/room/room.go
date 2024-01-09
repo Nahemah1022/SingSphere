@@ -41,6 +41,10 @@ func (r *Room) join(u *user.User) error {
 	if _, exist := r.users[u.ID]; exist {
 		return ErrUserAlreadyJoined
 	}
+	u.SendEvent(&socket.OutboundEvent{
+		EventBase: socket.EventBase{Type: "room"},
+		Room:      r.Wrap(),
+	})
 	r.broadcast(&socket.OutboundEvent{
 		EventBase: socket.EventBase{Type: "user_join", Desc: fmt.Sprintf("user %s joined this room", u.ID)},
 		User:      u.Wrap(),

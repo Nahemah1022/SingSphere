@@ -7,20 +7,13 @@ package room
 import (
 	"errors"
 
-	"github.com/Nahemah1022/singsphere-voice-server/streaming"
+	"github.com/Nahemah1022/singsphere-voice-server/pkg/socket"
 	"github.com/Nahemah1022/singsphere-voice-server/user"
 )
 
 type RoomsStats struct {
-	Online int         `json:"online"`
-	Rooms  []*RoomWrap `json:"rooms"`
-}
-
-// Public representation of a room
-type RoomWrap struct {
-	Name    string `json:"name"`
-	Online  int    `json:"online"`
-	Playing *streaming.MusicWrap
+	Online int                `json:"online"`
+	Rooms  []*socket.RoomWrap `json:"rooms"`
 }
 
 type RoomManager struct {
@@ -56,7 +49,7 @@ func (rm *RoomManager) Get(name string) (*Room, error) {
 // Get statistical metadata of all rooms
 func (rm *RoomManager) GetStats() RoomsStats {
 	stats := RoomsStats{
-		Rooms: []*RoomWrap{},
+		Rooms: []*socket.RoomWrap{},
 	}
 	for _, r := range rm.rooms {
 		if len(r.users) == 0 {
@@ -68,8 +61,13 @@ func (rm *RoomManager) GetStats() RoomsStats {
 	return stats
 }
 
-func (r *Room) Wrap() *RoomWrap {
-	return &RoomWrap{
+func (r *Room) Wrap() *socket.RoomWrap {
+	usersWrap := []*socket.UserWrap{}
+	for _, user := range r.users {
+		usersWrap = append(usersWrap, user.Wrap())
+	}
+	return &socket.RoomWrap{
+		Users:   usersWrap,
 		Name:    r.Name,
 		Online:  len(r.users),
 		Playing: nil,
