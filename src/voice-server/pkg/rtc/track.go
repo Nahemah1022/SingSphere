@@ -1,6 +1,10 @@
 package rtc
 
-import "github.com/pion/webrtc/v3"
+import (
+	"errors"
+
+	"github.com/pion/webrtc/v3"
+)
 
 // AddTrack adds the given track to this RTC node's peer connection instance
 func (node *RtcNode) AddTrack(track *webrtc.TrackLocalStaticRTP) (*webrtc.RTPSender, error) {
@@ -12,7 +16,15 @@ func (node *RtcNode) AddTrack(track *webrtc.TrackLocalStaticRTP) (*webrtc.RTPSen
 }
 
 // RemoveTrack remove the given track from this RTC node's peer connection instance
-func (node *RtcNode) RemoveTrack(sender *webrtc.RTPSender) error {
-	node.pc.RemoveTrack(sender)
+func (node *RtcNode) RemoveTrack(ssrc webrtc.SSRC) error {
+	node.SendersLock.Lock()
+	defer node.SendersLock.Unlock()
+	sender, ok := node.Senders[ssrc]
+	if !ok {
+		return errors.New("sender doesn't exist")
+	}
+	if err := node.pc.RemoveTrack(sender); err != nil {
+		return err
+	}
 	return nil
 }

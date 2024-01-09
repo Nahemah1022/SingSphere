@@ -53,6 +53,29 @@ func (r *Room) attachMicTrack(u *user.User) error {
 	return nil
 }
 
+// removeMicTrack removes the given user's mic track from all user's sender in this room
+func (r *Room) removeMicTrack(u *user.User) error {
+	<-u.MicReadyCtx.Done()
+	micTrack, err := u.GetMicTrack()
+	if err != nil {
+		return err
+	}
+	for _, roomUser := range r.users {
+		// skip the user himself
+		if u.ID == roomUser.ID {
+			continue
+		}
+		if err := roomUser.RemoveSender(micTrack.SSRC()); err != nil {
+			log.Println("ERROR Remove sender track", err)
+			return err
+		}
+		if err := roomUser.SendOffer(); err != nil {
+			panic(err)
+		}
+	}
+	return nil
+}
+
 // broadcastMicTrack broadcasts incoming RTP packets from the given user's mic to all room users
 func (r *Room) broadcastMicTrack(u *user.User, micTrackSSRC webrtc.SSRC) {
 	log.Println("Start Broadcasting")

@@ -158,6 +158,14 @@ func (u *User) AcceptMicTrack(tr *webrtc.TrackRemote) error {
 	return nil
 }
 
+// RemoveSender makes this user stop listening the track with given ssrc
+func (u *User) RemoveSender(ssrc webrtc.SSRC) error {
+	if err := u.rtc.RemoveTrack(ssrc); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (u *User) log(msg ...interface{}) {
 	log.Println(
 		fmt.Sprintf("user %s:", u.ID),

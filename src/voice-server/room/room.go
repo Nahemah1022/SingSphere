@@ -55,8 +55,8 @@ func (r *Room) join(u *user.User) error {
 	}
 	r.users[u.ID] = u
 	r.userLock.Unlock()
-	log.Println("New user joined room:", r.Name)
 	go r.attachMicTrack(u)
+	log.Println("New user joined room:", r.Name)
 	return nil
 }
 
@@ -72,6 +72,7 @@ func (r *Room) leave(u *user.User) error {
 		EventBase: socket.EventBase{Type: "user_leave", Desc: fmt.Sprintf("user %s left this room", u.ID)},
 		User:      u.Wrap(),
 	}, nil)
+	go r.removeMicTrack(u)
 	log.Println("user leave room:", r.Name)
 	return nil
 }
