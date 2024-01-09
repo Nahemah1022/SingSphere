@@ -18,9 +18,9 @@ func (u *User) ReadRTP() (*rtp.Packet, error) {
 
 // WriteRTP select the target track from map, and send the packet
 func (u *User) WriteRTP(pkt *rtp.Packet, ssrc webrtc.SSRC) error {
-	u.rtc.ListeningTracksLock.RLock()
-	targetTrack := u.rtc.ListeningTracks[ssrc]
-	u.rtc.ListeningTracksLock.RUnlock()
+	u.rtc.SendersLock.RLock()
+	targetTrack := u.rtc.Senders[ssrc].Track().(*webrtc.TrackLocalStaticRTP)
+	u.rtc.SendersLock.RUnlock()
 
 	if targetTrack == nil {
 		return errors.New("track is nil")

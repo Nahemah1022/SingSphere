@@ -12,7 +12,7 @@ func (node *RtcNode) AddTrack(track *webrtc.TrackLocalStaticRTP) (*webrtc.RTPSen
 }
 
 // RemoveTrack remove the given track from this RTC node's peer connection instance
-func (node *RtcNode) RemoveTrack(track *webrtc.TrackLocalStaticRTP) error {
-	// node.pc.RemoveTrack()
+func (node *RtcNode) RemoveTrack(sender *webrtc.RTPSender) error {
+	node.pc.RemoveTrack(sender)
 	return nil
 }

@@ -12,15 +12,15 @@ import (
 
 // RtcNode contains a peer connection instance and a set of communication channel associated with it
 type RtcNode struct {
-	pc                  *webrtc.PeerConnection
-	ICEConnectedCtx     context.Context
-	ICEDisconnectedCtx  context.Context
-	MicTrack            *webrtc.TrackRemote
-	MicReadyCtx         context.Context
-	SignalChs           *SignalChannels
-	RtpCh               chan *rtp.Packet // Collect all rtp packets from user's mic
-	ListeningTracksLock sync.RWMutex
-	ListeningTracks     map[webrtc.SSRC]*webrtc.TrackLocalStaticRTP
+	pc                 *webrtc.PeerConnection
+	ICEConnectedCtx    context.Context
+	ICEDisconnectedCtx context.Context
+	MicTrack           *webrtc.TrackRemote
+	MicReadyCtx        context.Context
+	SignalChs          *SignalChannels
+	RtpCh              chan *rtp.Packet // Collect all rtp packets from senders' track
+	SendersLock        sync.RWMutex
+	Senders            map[webrtc.SSRC]*webrtc.RTPSender // all incoming tracks' senders
 }
 
 // SignalChannels are a set of channels used for establishing WebRTC client-server connection
@@ -55,8 +55,8 @@ func New() (*RtcNode, error) {
 			AnswerCh:    make(chan webrtc.SessionDescription),
 			CandidateCh: make(chan *webrtc.ICECandidate),
 		},
-		RtpCh:           make(chan *rtp.Packet, 100),
-		ListeningTracks: make(map[webrtc.SSRC]*webrtc.TrackLocalStaticRTP),
+		RtpCh:   make(chan *rtp.Packet, 100),
+		Senders: make(map[webrtc.SSRC]*webrtc.RTPSender),
 	}
 
 	peerConnection.OnICECandidate(func(iceCandidate *webrtc.ICECandidate) {
