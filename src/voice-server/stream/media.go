@@ -1,6 +1,6 @@
-package streaming
+package stream
 
-type MusicWrap struct {
+type Music struct {
 	SongName string `json:"name"`
 	Artist   string `json:"artist"`
 	Duration int    `json:"duration"`

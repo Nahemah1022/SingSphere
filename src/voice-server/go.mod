@@ -7,6 +7,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pion/rtp v1.8.3
 	github.com/pion/webrtc/v3 v3.2.24
+	github.com/rabbitmq/amqp091-go v1.9.0
 )
 
 require (

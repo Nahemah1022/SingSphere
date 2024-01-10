@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Nahemah1022/singsphere-voice-server/streaming"
+	"github.com/Nahemah1022/singsphere-voice-server/stream"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -44,7 +44,7 @@ type RoomWrap struct {
 	Users   []*UserWrap `json:"users"`
 	Name    string      `json:"name"`
 	Online  int         `json:"online"`
-	Playing *streaming.MusicWrap
+	Playing *stream.Music
 }
 
 // SendEvent enocde event json body an sends it to write loop

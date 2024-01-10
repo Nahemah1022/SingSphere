@@ -6,9 +6,15 @@ package room
 
 import (
 	"errors"
+	"fmt"
+	"log"
+	"os"
 
+	"github.com/Nahemah1022/singsphere-voice-server/pkg/mq"
 	"github.com/Nahemah1022/singsphere-voice-server/pkg/socket"
+	"github.com/Nahemah1022/singsphere-voice-server/stream"
 	"github.com/Nahemah1022/singsphere-voice-server/user"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type RoomsStats struct {
@@ -17,7 +23,8 @@ type RoomsStats struct {
 }
 
 type RoomManager struct {
-	rooms map[string]*Room
+	rooms  map[string]*Room
+	mqConn *amqp.Connection
 }
 
 var ErrNotFound = errors.New("not found")
@@ -27,11 +34,22 @@ func (rm *RoomManager) GetOrCreate(name string) *Room {
 	if room, exist := rm.rooms[name]; exist {
 		return room
 	}
+	audioHub, err := stream.New(name)
+	if err != nil {
+		panic(err)
+	}
+	consumer, err := mq.New(name, rm.mqConn)
+	if err != nil {
+		panic(err)
+	}
 	newRoom := &Room{
-		Name:        name,
-		users:       make(map[string]*user.User),
-		UserJoinCh:  make(chan *user.User),
-		UserLeaveCh: make(chan *user.User),
+		Name:          name,
+		users:         make(map[string]*user.User),
+		UserJoinCh:    make(chan *user.User),
+		UserLeaveCh:   make(chan *user.User),
+		audioHub:      audioHub,
+		SongRequestCh: make(chan string),
+		mqConsumer:    consumer,
 	}
 	rm.rooms[name] = newRoom
 	go newRoom.run()
@@ -76,7 +94,18 @@ func (r *Room) Wrap() *socket.RoomWrap {
 
 // Instanciate a room manager
 func NewRoomManager() *RoomManager {
+	conn, err := amqp.Dial(fmt.Sprintf(
+		"amqp://%s:%s@%s:5672",
+		os.Getenv("MQ_USER"),
+		os.Getenv("MQ_PASSWORD"),
+		os.Getenv("MQ_HOST"),
+	))
+	if err != nil {
+		log.Println("fail to connect to RabbitMQ")
+	}
+
 	return &RoomManager{
-		rooms: make(map[string]*Room, 100),
+		rooms:  make(map[string]*Room, 100),
+		mqConn: conn,
 	}
 }

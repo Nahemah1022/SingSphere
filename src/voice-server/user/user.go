@@ -142,7 +142,7 @@ func (u *User) GetMicTrack() (*webrtc.TrackRemote, error) {
 // AcceptMicTrack attaches the given track to user's peer connection instance
 func (u *User) AcceptMicTrack(tr *webrtc.TrackRemote) error {
 	localTrack, newTrackErr := webrtc.NewTrackLocalStaticRTP(tr.Codec().RTPCodecCapability, "audio", "mic")
-	sender, err := u.rtc.AddTrack(localTrack)
+	sender, err := u.rtc.AddTrackRTP(localTrack)
 	if err != nil {
 		return err
 	}

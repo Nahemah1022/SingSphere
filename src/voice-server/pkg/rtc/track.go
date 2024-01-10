@@ -7,7 +7,16 @@ import (
 )
 
 // AddTrack adds the given track to this RTC node's peer connection instance
-func (node *RtcNode) AddTrack(track *webrtc.TrackLocalStaticRTP) (*webrtc.RTPSender, error) {
+func (node *RtcNode) AddTrackRTP(track *webrtc.TrackLocalStaticRTP) (*webrtc.RTPSender, error) {
+	sender, err := node.pc.AddTrack(track)
+	if err != nil {
+		return nil, err
+	}
+	return sender, nil
+}
+
+// AddTrack adds the given track to this RTC node's peer connection instance
+func (node *RtcNode) AddTrackSample(track *webrtc.TrackLocalStaticSample) (*webrtc.RTPSender, error) {
 	sender, err := node.pc.AddTrack(track)
 	if err != nil {
 		return nil, err

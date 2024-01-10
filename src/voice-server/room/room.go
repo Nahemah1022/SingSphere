@@ -6,16 +6,21 @@ import (
 	"log"
 	"sync"
 
+	"github.com/Nahemah1022/singsphere-voice-server/pkg/mq"
 	"github.com/Nahemah1022/singsphere-voice-server/pkg/socket"
+	"github.com/Nahemah1022/singsphere-voice-server/stream"
 	"github.com/Nahemah1022/singsphere-voice-server/user"
 )
 
 type Room struct {
-	Name        string
-	users       map[string]*user.User
-	UserJoinCh  chan *user.User
-	UserLeaveCh chan *user.User
-	userLock    sync.RWMutex
+	Name          string
+	users         map[string]*user.User
+	userLock      sync.RWMutex
+	UserJoinCh    chan *user.User
+	UserLeaveCh   chan *user.User
+	SongRequestCh chan string
+	mqConsumer    *mq.Consumer
+	audioHub      *stream.AudioHub
 }
 
 var (
@@ -88,6 +93,8 @@ func (r *Room) run() {
 			if err := r.leave(u); err != nil {
 				log.Println(err)
 			}
+		case song := <-r.SongRequestCh:
+			log.Println("consume song ", song)
 		}
 	}
 }
