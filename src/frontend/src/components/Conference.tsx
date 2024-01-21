@@ -89,7 +89,7 @@ const Conference = ({ roomId }: ConferenceProps) => {
   const refAudioEl = useRef<HTMLAudioElement | null>(null);
 
   const refTransport = useRef<WebSocketTransport>();
-  const WS_URL = `wss://sinsphere-api.nahemah.com/${roomId}`;
+  const WS_URL = `ws://localhost:8080/ws/${roomId}`;
   console.log(WS_URL);
   if (!refTransport.current) {
     refTransport.current = new WebSocketTransport(WS_URL);
