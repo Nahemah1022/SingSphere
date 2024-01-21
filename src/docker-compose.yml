@@ -13,7 +13,7 @@ services:
       - MQ_USER=admin
       - MQ_PASSWORD=admin
       - MQ_HOST=localhost
-  rabbitmq:
+  rabbitmq: # Remove this service if you use Amazon MQ instead of self-managed rabbitMQ instance
     image: rabbitmq:management
     ports:
       - 5672:5672
