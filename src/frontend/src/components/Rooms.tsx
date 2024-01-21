@@ -28,7 +28,7 @@ function Rooms() {
 
   const fetchKTVrooms = async () => {
     try {
-      const response = await fetch('https://sinsphere-api.nahemah.com/api/stats');
+      const response = await fetch('http://localhost:8080/api/stats');
       const data: { rooms: KTVroom[] } = await response.json();
 
       if (data.rooms && Array.isArray(data.rooms)) {
@@ -50,7 +50,7 @@ function Rooms() {
   const handleEnterRoom = async () => {
     try {
       // Fetch data from the API
-      const response = await fetch('https://sinsphere-api.nahemah.com/api/stats');
+      const response = await fetch('http://localhost:8080/api/stats');
       const data = await response.json();
 
       // Check if the entered code matches any room name

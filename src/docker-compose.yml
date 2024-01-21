@@ -1,6 +1,18 @@
 version: "3"
 
 services:
+  voice-server:
+    restart: always
+    build: ./voice-server
+    user: root
+    environment:
+      - GO_ENV=production
+      - PORT=80
+      - MEDIA_DIR=./media/
+      - MQ_EXCHANGES_NAME=songs_exchange
+      - MQ_USER=admin
+      - MQ_PASSWORD=admin
+      - MQ_HOST=localhost
   rabbitmq:
     image: rabbitmq:management
     ports:
