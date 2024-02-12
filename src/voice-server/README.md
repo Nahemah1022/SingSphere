@@ -43,3 +43,9 @@ This project describes a GoLang-based music streaming service, leveraging an EC2
 1. **Set Up EC2 Instance**: Deploy an EC2 instance with necessary network configurations.
 2. **S3 Bucket Integration**: Mount the S3 bucket onto the EC2 for direct file access through by executing `s3-mount.sh` file.
 3. **Deploy Modules**: Simply run `docker-compose up -d` and you are all set!!
+
+---
+
+## TODO
+[] Separate the music streaminig module out, performing its function as a normal room user
+[] Testing
